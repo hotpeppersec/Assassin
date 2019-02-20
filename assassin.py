@@ -37,5 +37,12 @@ print "You have selected AS%s" % (asns[selection]["asn"],)
 queryasn = "AS%s" % (asns[selection]["asn"],)
 shodan = shodanAsn(queryasn)
 for match in shodan["matches"]:
+  print "----------"
   for entry in match:
-    print "%s: %s" % (entry, match[entry])
+    if (entry == "http") or (entry == "ssl") or (entry == "ssh") or (entry == "location"):
+      print "%s" % (entry,)
+      attribs = match[entry]
+      for attrib in attribs:
+        print"\t%s: %s" % (attrib, attribs[attrib])
+    else:
+        print "%s: %s" % (entry, match[entry])
