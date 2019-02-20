@@ -28,21 +28,27 @@ def shodanAsn(asn):
 query = raw_input("What company would you like to investigate? ")
 asns = getAsn(query)
 counter = 1
-for asn in asns:
-  print "%s: AS%s: %s - %s" % (counter, asn["asn"], asn["name"], asn["description"])
-  counter = counter + 1
-selection = int(raw_input("Which of these appears to be the appropriate company? "))-1
-print "You have selected AS%s" % (asns[selection]["asn"],)
+if (len(asns) > 0):
+  for asn in asns:
+    print "%s: AS%s: %s - %s" % (counter, asn["asn"], asn["name"], asn["description"])
+    counter = counter + 1
+  selection = int(raw_input("Which of these appears to be the appropriate company? "))-1
+  print "You have selected AS%s" % (asns[selection]["asn"],)
+else:
+  print "There does not appear to be a BGP ASN associated with that company."
 
 queryasn = "AS%s" % (asns[selection]["asn"],)
 shodan = shodanAsn(queryasn)
-for match in shodan["matches"]:
-  print "----------"
-  for entry in match:
-    if (entry == "http") or (entry == "ssl") or (entry == "ssh") or (entry == "location"):
-      print "%s" % (entry,)
-      attribs = match[entry]
-      for attrib in attribs:
-        print"\t%s: %s" % (attrib, attribs[attrib])
-    else:
-        print "%s: %s" % (entry, match[entry])
+if (len(shodan) > 0):
+  for match in shodan["matches"]:
+    print "----------"
+    for entry in match:
+      if (entry == "http") or (entry == "ssl") or (entry == "ssh") or (entry == "location"):
+        print "%s" % (entry,)
+        attribs = match[entry]
+        for attrib in attribs:
+          print"\t%s: %s" % (attrib, attribs[attrib])
+      else:
+          print "%s: %s" % (entry, match[entry])
+else:
+  print "There appears to be no systems visible on this ASN."
