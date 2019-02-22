@@ -1,0 +1,100 @@
+#!/bin/sh -e
+
+# Copyright (c) 2013 by Farsight Security, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+if [ -r "/etc/dnsdb-query.conf" ]; then
+    . /etc/dnsdb-query.conf
+fi
+
+if [ -r "$HOME/.dnsdb-query.conf" ]; then
+    . $HOME/.dnsdb-query.conf
+fi
+
+if [ -z "$APIKEY" ]; then
+    echo "$(basename $0): APIKEY not defined in /etc/dnsdb-query.conf or $HOME/.dnsdb-query.conf"
+    exit 1
+fi
+
+if [ -z "$DNSDB_SERVER" ]; then
+    DNSDB_SERVER="https://api.dnsdb.info"
+fi
+
+if [ -z "$CURL" ]; then
+    CURL="curl"
+fi
+
+if [ -z "$DNSDB_FORMAT" ]; then
+    DNSDB_FORMAT="text"
+fi
+
+export HTTP_PROXY HTTPS_PROXY
+
+case "$DNSDB_FORMAT" in
+    json)
+        ACCEPT="application/json"
+        ;;
+    text)
+        ACCEPT="text/plain"
+        ;;
+    *)
+        echo "$(basename $0): unknown value for DNSDB_FORMAT: $DNSDB_FORMAT"
+        exit 1
+esac
+
+DNSDB_RRSET_LOOKUP="${DNSDB_SERVER}/lookup/rrset"
+DNSDB_RDATA_LOOKUP="${DNSDB_SERVER}/lookup/rdata"
+
+usage() {
+    echo "Usage: $(basename $0) rrset <ONAME>[/<RRTYPE>[/<BAILIWICK>]]"
+    echo "Usage: $(basename $0) rdata ip <IPADDRESS>"
+    echo "Usage: $(basename $0) rdata name <NAME>[/<RRTYPE>]"
+    echo "Usage: $(basename $0) rdata raw <HEX>[/<RRTYPE>]"
+    exit 1
+}
+
+case "$1" in
+    rrset)
+        oname="$2"
+        if [ -z "$oname" ]; then
+            usage
+        fi
+        $CURL --path-as-is -Ss -H "X-API-Key: ${APIKEY}" -H "Accept: ${ACCEPT}" ${DNSDB_RRSET_LOOKUP}/name/$oname
+        ;;
+
+    rdata)
+        lookup_type="$2"
+        rdata="$3"
+        if [ -z "$lookup_type" -o -z "$rdata" ]; then
+            usage
+        fi
+        case "$lookup_type" in
+            ip)
+                rdata="$(echo $rdata | sed -e 's#/#,#')"
+                ;;
+        esac
+        case "$lookup_type" in
+            ip|name|raw)
+                $CURL --path-as-is -Ss -H "X-API-Key: ${APIKEY}" -H "Accept: ${ACCEPT}" ${DNSDB_RDATA_LOOKUP}/$lookup_type/$rdata
+                ;;
+            *)
+                usage
+                ;;
+        esac
+        ;;
+
+    *)
+        usage
+        ;;
+esac
