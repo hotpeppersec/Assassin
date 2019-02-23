@@ -35,15 +35,42 @@ if (len(dns) > 0):
       print host
       if (len(resolve[1]) > 0):
         for alias in resolve[1]:
-          print "\t%s" % (alias,)
+          print "\tAlias: %s" % (alias,)
       if (len(resolve[2]) > 0):
         for ip in resolve[2]:
           try:
             reversedns = socket.getfqdn(ip)
-            print "\t%s: %s" % (ip, reversedns)
+            print "\tIP Address: %s" % (ip,)
+            print "\tReverse DNS: %s" % (reversedns,)
             shodan = getShodan(ip)
             if (shodan is not None):
-              print shodan
+              if shodan.has_key("vulns"):
+                for vuln in shodan["vulns"]:
+                  print "\tVulnerability: %s" % (vuln,)
+              if shodan.has_key("org"):
+                print "\tOrg: %s" % (shodan["org"],)
+              if shodan.has_key("data"):
+                for service in shodan["data"]:
+                  if service.has_key("transport"):
+                    print "\t\tTransport: %s" % (service["transport"], )
+                  if service.has_key("port"):
+                    print "\t\tPort: %s" % (service["port"], )
+                  if service.has_key("data"):
+                    print "\t\tData:"
+                    data = service["data"].split("\n")
+                    for line in data:
+                      print "\t\t\t%s" % (line, )
+                  if service.has_key("ssl"):
+                    print "\t\tSSL:"
+                    if service["ssl"].has_key("cert"):
+                      if service["ssl"]["cert"].has_key("expired"):
+                        print "\t\t\tExpired: %s" % (service["ssl"]["cert"]["expired"], )
+                      if service["ssl"]["cert"].has_key("issuer"):
+                        if service["ssl"]["cert"]["issuer"].has_key("O"):
+                          print "\t\t\tIssuer: %s" % (service["ssl"]["cert"]["issuer"]["O"], )
+                      if service["ssl"]["cert"].has_key("subject"):
+                        if service["ssl"]["cert"]["subject"].has_key("CN"):
+                          print "\t\t\tCommon Name: %s" % (service["ssl"]["cert"]["subject"]["CN"], )
           except socket.gaierror, err:
             print "\t%s" % (ip,)
     except socket.gaierror, err:
