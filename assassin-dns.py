@@ -76,7 +76,7 @@ if (len(dns) > 0):
           else:
             try:
               reversedns = socket.getfqdn(ip)
-              if("amazon" in reversedns):
+              if("amazon" in reversedns) or ("cloudfront" in reversedns):
                 amazon = amazon + 1
               elif("azure" in reversedns):
                 azure = azure + 1
