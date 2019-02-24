@@ -23,6 +23,7 @@ akamai = 0
 sslservices = 0
 expiredcerts = 0
 wildcardcert = 0
+http200s = 0
 
 def getDns(domain):
   server='https://api.dnsdb.info'
@@ -104,9 +105,13 @@ if (len(dns) > 0):
                     if service.has_key("data"):
                       liveservices = liveservices + 1
                       print "\t\tData:"
-                      data = service["data"].split("\n")
-                      for line in data:
-                        print "\t\t\t%s" % (line, )
+                      data = service["data"].split("\n")                      
+                      if ("HTTP/1.1 200 OK" in data[0]):
+                        http200s = http200s + 1 
+                      for rawline in data:
+                        line = rawline.strip()
+                        if (len(line) > 0):
+                          print "\t\t\t%s" % (line, )
                     if service.has_key("ssl"):
                       sslservices = sslservices + 1
                       print "\t\tSSL:"
@@ -131,7 +136,7 @@ if (len(dns) > 0):
 print "DNS Entries: %s" % (dnsnames, )
 print "Live Systems: %s" % (livehosts, )
 print "Services: %s" % (liveservices, )
-print "Vulnerabilities: %s" % (vulnerabilities, )
+print "Potential Vulnerabilities: %s" % (vulnerabilities, )
 print "Private IPs: %s" % (privateips, )
 print "Amazon: %s" % (amazon, )
 print "Azure: %s" % (azure, )
@@ -140,3 +145,4 @@ print "Akamai: %s" % (akamai, )
 print "SSL Services: %s" % (sslservices, )
 print "Wildcard Certificates: %s" % (wildcardcert, )
 print "Expired Certificates: %s" % (expiredcerts, )
+print "HTTP 200 Responses: %s" % (http200s, )
