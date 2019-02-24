@@ -39,8 +39,11 @@ def getShodan(ip):
   url='https://api.shodan.io/shodan/host/%s?key=%s' % (ip, shodankey)
   try:
     jsonresponse = urllib2.urlopen(url)
-    response = json.loads(jsonresponse.read())
-    return response  
+    try:
+      response = json.loads(jsonresponse.read())
+      return response  
+    except ValueError as e:
+      pass
   except urllib2.HTTPError, e:
     pass
 
