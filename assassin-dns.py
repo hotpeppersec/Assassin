@@ -109,7 +109,7 @@ if (len(dns) > 0):
                       if ("HTTP/1.1 200 OK" in data[0]):
                         http200s = http200s + 1 
                       for rawline in data:
-                        line = rawline.strip()
+                        line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
                         if (len(line) > 0):
                           print "\t\t\t%s" % (line, )
                     if service.has_key("ssl"):
