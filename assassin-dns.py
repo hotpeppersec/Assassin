@@ -24,6 +24,7 @@ sslservices = 0
 expiredcerts = 0
 wildcardcert = 0
 http200s = 0
+ipaddresses = []
 
 def getDns(domain):
   server='https://api.dnsdb.info'
@@ -58,6 +59,7 @@ def checkPrivate(ip):
   else:
     return False
 
+
 dns = getDns(queryDomain)
 if (len(dns) > 0):
   dnsnames = len(dns)  
@@ -71,65 +73,69 @@ if (len(dns) > 0):
           print "\tAlias: %s" % (alias,)
       if (len(resolve[2]) > 0):
         for ip in resolve[2]:
-          if (checkPrivate(ip)):
-            privateips = privateips + 1
+          if (ip in ipaddresses):
+            print "\t%s - IP address already analyzed" % (ip, )
           else:
-            try:
-              reversedns = socket.getfqdn(ip)
-              if("amazon" in reversedns) or ("cloudfront" in reversedns):
-                amazon = amazon + 1
-              elif("azure" in reversedns):
-                azure = azure + 1
-              elif("google" in reversedns):
-                google = google + 1
-              elif("akamai" in reversedns):
-                akamai = akamai + 1
-              else:
-                pass
-              print "\tIP Address: %s" % (ip,)
-              print "\tReverse DNS: %s" % (reversedns,)
-              shodan = getShodan(ip)
-              if (shodan is not None):
-                if shodan.has_key("vulns"):
-                  for vuln in shodan["vulns"]:
-                    vulnerabilities = vulnerabilities + 1  
-                    print "\tVulnerability: %s" % (vuln,)
-                if shodan.has_key("org"):
-                  print "\tOrg: %s" % (shodan["org"],)
-                if shodan.has_key("data"):
-                  for service in shodan["data"]:
-                    if service.has_key("transport"):
-                      print "\t\tTransport: %s" % (service["transport"], )
-                    if service.has_key("port"):
-                      print "\t\tPort: %s" % (service["port"], )
-                    if service.has_key("data"):
-                      liveservices = liveservices + 1
-                      print "\t\tData:"
-                      data = service["data"].split("\n")                      
-                      if ("HTTP/1.1 200 OK" in data[0]):
-                        http200s = http200s + 1 
-                      for rawline in data:
-                        line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
-                        if (len(line) > 0):
-                          print "\t\t\t%s" % (line, )
-                    if service.has_key("ssl"):
-                      sslservices = sslservices + 1
-                      print "\t\tSSL:"
-                      if service["ssl"].has_key("cert"):
-                        if service["ssl"]["cert"].has_key("expired"):
-                          if (service["ssl"]["cert"]["expired"] == True):
-                            expiredcerts = expiredcerts + 1
-                          print "\t\t\tExpired: %s" % (service["ssl"]["cert"]["expired"], )
-                        if service["ssl"]["cert"].has_key("issuer"):
-                          if service["ssl"]["cert"]["issuer"].has_key("O"):
-                            print "\t\t\tIssuer: %s" % (service["ssl"]["cert"]["issuer"]["O"], )
-                        if service["ssl"]["cert"].has_key("subject"):
-                          if service["ssl"]["cert"]["subject"].has_key("CN"):
-                            if("*" in service["ssl"]["cert"]["subject"]["CN"]):
-                              wildcardcert = wildcardcert + 1
-                              print "\t\t\tCommon Name: %s" % (service["ssl"]["cert"]["subject"]["CN"], )
-            except socket.gaierror, err:
-              print "\t%s" % (ip,)
+            ipaddresses.append(ip)
+            if (checkPrivate(ip)):
+              privateips = privateips + 1
+            else:
+              try:
+                reversedns = socket.getfqdn(ip)
+                if("amazon" in reversedns) or ("cloudfront" in reversedns):
+                  amazon = amazon + 1
+                elif("azure" in reversedns):
+                  azure = azure + 1
+                elif("google" in reversedns):
+                  google = google + 1
+                elif("akamai" in reversedns):
+                  akamai = akamai + 1
+                else:
+                  pass
+                print "\tIP Address: %s" % (ip,)
+                print "\tReverse DNS: %s" % (reversedns,)
+                shodan = getShodan(ip)
+                if (shodan is not None):
+                  if shodan.has_key("vulns"):
+                    for vuln in shodan["vulns"]:
+                      vulnerabilities = vulnerabilities + 1  
+                      print "\tVulnerability: %s" % (vuln,)
+                  if shodan.has_key("org"):
+                    print "\tOrg: %s" % (shodan["org"],)
+                  if shodan.has_key("data"):
+                    for service in shodan["data"]:
+                      if service.has_key("transport"):
+                        print "\t\tTransport: %s" % (service["transport"], )
+                      if service.has_key("port"):
+                        print "\t\tPort: %s" % (service["port"], )
+                      if service.has_key("data"):
+                        liveservices = liveservices + 1
+                        print "\t\tData:"
+                        data = service["data"].split("\n")                      
+                        if ("HTTP/1.1 200 OK" in data[0]):
+                          http200s = http200s + 1 
+                        for rawline in data:
+                          line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
+                          if (len(line) > 0):
+                            print "\t\t\t%s" % (line, )
+                      if service.has_key("ssl"):
+                        sslservices = sslservices + 1
+                        print "\t\tSSL:"
+                        if service["ssl"].has_key("cert"):
+                          if service["ssl"]["cert"].has_key("expired"):
+                            if (service["ssl"]["cert"]["expired"] == True):
+                              expiredcerts = expiredcerts + 1
+                            print "\t\t\tExpired: %s" % (service["ssl"]["cert"]["expired"], )
+                          if service["ssl"]["cert"].has_key("issuer"):
+                            if service["ssl"]["cert"]["issuer"].has_key("O"):
+                              print "\t\t\tIssuer: %s" % (service["ssl"]["cert"]["issuer"]["O"], )
+                          if service["ssl"]["cert"].has_key("subject"):
+                            if service["ssl"]["cert"]["subject"].has_key("CN"):
+                              if("*" in service["ssl"]["cert"]["subject"]["CN"]):
+                                wildcardcert = wildcardcert + 1
+                                print "\t\t\tCommon Name: %s" % (service["ssl"]["cert"]["subject"]["CN"], )
+              except socket.gaierror, err:
+                print "\t%s" % (ip,)
     except socket.gaierror, err:
       pass
 
