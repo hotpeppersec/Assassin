@@ -3,6 +3,7 @@
 from dnsdb_query import DnsdbClient
 import socket
 import ipaddress
+from ipwhois import IPWhois
 import urllib2
 import json
 
@@ -80,7 +81,6 @@ def getCve(cve):
   except urllib2.HTTPError, e:
     pass
 
-
 dns = getDns(queryDomain)
 if (len(dns) > 0):
   dnsnames = len(dns)  
@@ -120,6 +120,11 @@ if (len(dns) > 0):
                   isakamai = True
                 print "\tIP Address: %s" % (ip,)
                 print "\tReverse DNS: %s" % (reversedns,)
+                whoisclient = IPWhois(str(ip))
+                whoisresult = whoisclient.lookup_rdap(depth=1)
+                if (whoisresult.has_key("asn_description")):
+                  whois = str(whoisresult['asn_description'])
+                  print "\tWhois: %s" % (whois, )
                 shodan = getShodan(ip)
                 if (shodan is not None):
                   if shodan.has_key("vulns"):
@@ -228,7 +233,7 @@ print "\tDigital Ocean: %s" % (digitalocean, )
 print "\tAkamai: %s" % (akamai, )
 print "Services: %s" % (liveservices, )
 print "\tHTTP(S): %s" % (httplisteners, )
-print "\tHTTP(s) 200 Responses: %s" % (http200s, )
+print "\tHTTP(S) 200 Responses: %s" % (http200s, )
 print "\tSSH: %s" % (sshlisteners, )
 print "\tSSL: %s" % (sslservices, )
 print "\t\tWildcard Certificates: %s" % (wildcardcert, )
