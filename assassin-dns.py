@@ -18,12 +18,16 @@ vulnerabilities = 0
 amazon = 0
 azure = 0
 google = 0
+oracle = 0
+digitalocean = 0
 rackspace = 0
 akamai = 0
 sslservices = 0
 expiredcerts = 0
 wildcardcert = 0
+httplisteners = 0
 http200s = 0
+sshlisteners = 0
 ipaddresses = []
 
 def getDns(domain):
@@ -80,18 +84,23 @@ if (len(dns) > 0):
             if (checkPrivate(ip)):
               privateips = privateips + 1
             else:
+              isamazon = False
+              isazure = False
+              isgoogle = False
+              isoracle = False
+              isdigitalocean = False
+              israckspace = False
+              isakamai = False
               try:
                 reversedns = socket.getfqdn(ip)
                 if("amazon" in reversedns) or ("cloudfront" in reversedns):
-                  amazon = amazon + 1
-                elif("azure" in reversedns):
-                  azure = azure + 1
-                elif("google" in reversedns):
-                  google = google + 1
-                elif("akamai" in reversedns):
-                  akamai = akamai + 1
-                else:
-                  pass
+                  isamazon = True
+                if("azure" in reversedns):
+                  isazure = True
+                if("google" in reversedns):
+                  isgoogle = True
+                if("akamai" in reversedns):
+                  isakamai = True
                 print "\tIP Address: %s" % (ip,)
                 print "\tReverse DNS: %s" % (reversedns,)
                 shodan = getShodan(ip)
@@ -102,6 +111,18 @@ if (len(dns) > 0):
                       print "\tVulnerability: %s" % (vuln,)
                   if shodan.has_key("org"):
                     print "\tOrg: %s" % (shodan["org"],)
+                    if ("Amazon" in shodan["org"]):
+                      isamazon = True
+                    if ("Microsoft Azure" in shodan["org"]):
+                      isazure = True
+                    if ("Google Cloud" in shodan["org"]):
+                      isgoogle = True
+                    if ("Oracle" in shodan["org"]):
+                      isoracle = True
+                    if ("Digital Ocean" in shodan["org"]):
+                      isdigitalocean = True
+                    if ("Rackspace" in shodan["org"]):
+                      israckspace = True
                   if shodan.has_key("data"):
                     for service in shodan["data"]:
                       if service.has_key("transport"):
@@ -112,11 +133,15 @@ if (len(dns) > 0):
                         liveservices = liveservices + 1
                         print "\t\tData:"
                         data = service["data"].split("\n")                      
-                        if ("HTTP/1.1 200 OK" in data[0]):
-                          http200s = http200s + 1 
                         for rawline in data:
                           line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
                           if (len(line) > 0):
+                            if ("HTTP" in line):
+                              httplisteners = httplisteners + 1
+                            if ("HTTP/1.1 200 OK" in line):
+                              http200s = http200s + 1
+                            if ("SSH" in line):
+                              sshlisteners = sshlisteners + 1
                             print "\t\t\t%s" % (line, )
                       if service.has_key("ssl"):
                         sslservices = sslservices + 1
@@ -133,22 +158,42 @@ if (len(dns) > 0):
                             if service["ssl"]["cert"]["subject"].has_key("CN"):
                               if("*" in service["ssl"]["cert"]["subject"]["CN"]):
                                 wildcardcert = wildcardcert + 1
-                                print "\t\t\tCommon Name: %s" % (service["ssl"]["cert"]["subject"]["CN"], )
+                              print "\t\t\tCommon Name: %s" % (service["ssl"]["cert"]["subject"]["CN"], )
+                if (isamazon):
+                  amazon = amazon + 1
+                if (isazure):
+                  azure = azure + 1
+                if (isgoogle):
+                  google = google + 1
+                if (isoracle):
+                  oracle = oracle + 1
+                if (isdigitalocean):
+                  digitalocean = digitalocean + 1
+                if (israckspace):
+                  rackspace = rackspace + 1
+                if (isakamai):
+                  akamai = akamai + 1
               except socket.gaierror, err:
                 print "\t%s" % (ip,)
     except socket.gaierror, err:
       pass
 
 print "DNS Entries: %s" % (dnsnames, )
-print "Live Systems: %s" % (livehosts, )
+print "Live DNS Entries: %s" % (livehosts, )
+print "Unique IPs Analyzed: %s" % (len(ipaddresses), )
 print "Services: %s" % (liveservices, )
 print "Potential Vulnerabilities: %s" % (vulnerabilities, )
 print "Private IPs: %s" % (privateips, )
 print "Amazon: %s" % (amazon, )
 print "Azure: %s" % (azure, )
 print "Google: %s" % (google, )
+print "Oracle: %s" % (oracle, )
+print "Rackspace: %s" % (rackspace, )
+print "Digital Ocean: %s" % (digitalocean, )
 print "Akamai: %s" % (akamai, )
 print "SSL Services: %s" % (sslservices, )
 print "Wildcard Certificates: %s" % (wildcardcert, )
 print "Expired Certificates: %s" % (expiredcerts, )
+print "HTTP Listeners: %s" % (httplisteners, )
 print "HTTP 200 Responses: %s" % (http200s, )
+print "SSH Listeners: %s" % (sshlisteners, )
