@@ -122,8 +122,27 @@ if (len(dns) > 0):
                 print "\tReverse DNS: %s" % (reversedns,)
                 whoisclient = IPWhois(str(ip))
                 whoisresult = whoisclient.lookup_rdap(depth=1)
-                if (whoisresult.has_key("asn_description")):
-                  whois = str(whoisresult['asn_description'])
+                if (whoisresult.has_key("org_name")):
+                  whois = whoisresult["org_name"]
+                  if ("Amazon.com" in whois):
+                    isamazon = True
+                  if ("Microsoft Corporation" in whois):
+                    isazure = True
+                  if ("Google" in whois):
+                    isgoogle = True
+                  if ("Oracle Corporation" in whois):
+                    isoracle = True
+                  print "\tWhois: %s" % (whois, )
+                elif (whoisresult.has_key("asn_description")):
+                  whois = whoisresult["asn_description"]
+                  if ("Amazon.com" in whois):
+                    isamazon = True
+                  if ("Microsoft Corporation" in whois):
+                    isazure = True
+                  if ("Google" in whois):
+                    isgoogle = True
+                  if ("Oracle Corporation" in whois):
+                    isoracle = True
                   print "\tWhois: %s" % (whois, )
                 shodan = getShodan(ip)
                 if (shodan is not None):
