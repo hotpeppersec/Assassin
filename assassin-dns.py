@@ -15,6 +15,11 @@ livehosts = 0
 privateips = 0
 liveservices = 0
 vulnerabilities = 0
+severitynone = 0
+severitylow = 0
+severitymedium = 0
+severityhigh = 0
+severitycritical = 0
 amazon = 0
 azure = 0
 google = 0
@@ -63,6 +68,18 @@ def checkPrivate(ip):
   else:
     return False
 
+def getCve(cve):
+  url = "http://cve.circl.lu/api/cve/%s" % (cve, )
+  try:
+    jsonresponse = urllib2.urlopen(url)
+    try:
+      response = json.loads(jsonresponse.read())
+      return response
+    except ValueError as e:
+      pass
+  except urllib2.HTTPError, e:
+    pass
+
 
 dns = getDns(queryDomain)
 if (len(dns) > 0):
@@ -108,7 +125,27 @@ if (len(dns) > 0):
                   if shodan.has_key("vulns"):
                     for vuln in shodan["vulns"]:
                       vulnerabilities = vulnerabilities + 1  
-                      print "\tVulnerability: %s" % (vuln,)
+                      print "\tVulnerability: %s" % (vuln, )
+                      cvedata = getCve(vuln)
+                      if cvedata.has_key("cvss"):
+                        if (float(cvedata["cvss"]) == 0):
+                          severity = "None"
+                          severitynone = severitynone + 1
+                        elif (0 < float(cvedata["cvss"]) < 4):
+                          severity = "Low"
+                          severitylow = severitylow + 1
+                        elif (4 <= float(cvedata["cvss"]) < 7):
+                          severity = "Medium"
+                          severitymedium = severitymedium + 1
+                        elif (7 <= float(cvedata["cvss"]) < 9):
+                          severity = "High"
+                          severityhigh = severityhigh + 1
+                        elif (9 <= float(cvedata["cvss"])):
+                          severity = "Critical"
+                          severitycritical = severitycritical + 1
+                        else:
+                          severity = "Unknown"
+                        print "\t\tSeverity: %s - %s" % (cvedata["cvss"], severity)
                   if shodan.has_key("org"):
                     print "\tOrg: %s" % (shodan["org"],)
                     if ("Amazon" in shodan["org"]):
@@ -181,19 +218,24 @@ if (len(dns) > 0):
 print "DNS Entries: %s" % (dnsnames, )
 print "Live DNS Entries: %s" % (livehosts, )
 print "Unique IPs Analyzed: %s" % (len(ipaddresses), )
+print "\tPrivate IPs: %s" % (privateips, )
+print "\tAmazon: %s" % (amazon, )
+print "\tAzure: %s" % (azure, )
+print "\tGoogle: %s" % (google, )
+print "\tOracle: %s" % (oracle, )
+print "\tRackspace: %s" % (rackspace, )
+print "\tDigital Ocean: %s" % (digitalocean, )
+print "\tAkamai: %s" % (akamai, )
 print "Services: %s" % (liveservices, )
-print "Potential Vulnerabilities: %s" % (vulnerabilities, )
-print "Private IPs: %s" % (privateips, )
-print "Amazon: %s" % (amazon, )
-print "Azure: %s" % (azure, )
-print "Google: %s" % (google, )
-print "Oracle: %s" % (oracle, )
-print "Rackspace: %s" % (rackspace, )
-print "Digital Ocean: %s" % (digitalocean, )
-print "Akamai: %s" % (akamai, )
-print "SSL Services: %s" % (sslservices, )
-print "Wildcard Certificates: %s" % (wildcardcert, )
-print "Expired Certificates: %s" % (expiredcerts, )
-print "HTTP Listeners: %s" % (httplisteners, )
-print "HTTP 200 Responses: %s" % (http200s, )
-print "SSH Listeners: %s" % (sshlisteners, )
+print "\tHTTP(S): %s" % (httplisteners, )
+print "\tHTTP(s) 200 Responses: %s" % (http200s, )
+print "\tSSH: %s" % (sshlisteners, )
+print "\tSSL: %s" % (sslservices, )
+print "\t\tWildcard Certificates: %s" % (wildcardcert, )
+print "\t\tExpired Certificates: %s" % (expiredcerts, )
+print "Vulnerabilities: %s" % (vulnerabilities, )
+print "\tNone: %s" % severitynone
+print "\tLow: %s" % severitylow
+print "\tMedium: %s" % severitymedium
+print "\tHigh: %s" % severityhigh
+print "\tCritical: %s" % severitycritical
