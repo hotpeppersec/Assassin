@@ -120,30 +120,33 @@ if (len(dns) > 0):
                   isakamai = True
                 print "\tIP Address: %s" % (ip,)
                 print "\tReverse DNS: %s" % (reversedns,)
-                whoisclient = IPWhois(str(ip))
-                whoisresult = whoisclient.lookup_rdap(depth=1)
-                if (whoisresult.has_key("org_name")):
-                  whois = whoisresult["org_name"]
-                  if ("Amazon.com" in whois):
-                    isamazon = True
-                  if ("Microsoft Corporation" in whois):
-                    isazure = True
-                  if ("Google" in whois):
-                    isgoogle = True
-                  if ("Oracle Corporation" in whois):
-                    isoracle = True
-                  print "\tWhois: %s" % (whois, )
-                elif (whoisresult.has_key("asn_description")):
-                  whois = whoisresult["asn_description"]
-                  if ("Amazon.com" in whois):
-                    isamazon = True
-                  if ("Microsoft Corporation" in whois):
-                    isazure = True
-                  if ("Google" in whois):
-                    isgoogle = True
-                  if ("Oracle Corporation" in whois):
-                    isoracle = True
-                  print "\tWhois: %s" % (whois, )
+                try:
+                  whoisclient = IPWhois(str(ip))
+                  whoisresult = whoisclient.lookup_rdap(depth=1)
+                  if (whoisresult.has_key("org_name")):
+                    whois = whoisresult["org_name"]
+                    if ("Amazon.com" in whois):
+                      isamazon = True
+                    if ("Microsoft Corporation" in whois):
+                      isazure = True
+                    if ("Google" in whois):
+                      isgoogle = True
+                    if ("Oracle Corporation" in whois):
+                      isoracle = True
+                    print "\tWhois: %s" % (whois, )
+                  elif (whoisresult.has_key("asn_description")):
+                    whois = whoisresult["asn_description"]
+                    if ("Amazon.com" in whois):
+                      isamazon = True
+                    if ("Microsoft Corporation" in whois):
+                      isazure = True
+                    if ("Google" in whois):
+                      isgoogle = True
+                    if ("Oracle Corporation" in whois):
+                      isoracle = True
+                    print "\tWhois: %s" % (whois, )
+                except:
+                  pass
                 shodan = getShodan(ip)
                 if (shodan is not None):
                   if shodan.has_key("vulns"):
@@ -171,19 +174,20 @@ if (len(dns) > 0):
                           severity = "Unknown"
                         print "\t\tSeverity: %s - %s" % (cvedata["cvss"], severity)
                   if shodan.has_key("org"):
-                    print "\tOrg: %s" % (shodan["org"],)
-                    if ("Amazon" in shodan["org"]):
-                      isamazon = True
-                    if ("Microsoft Azure" in shodan["org"]):
-                      isazure = True
-                    if ("Google Cloud" in shodan["org"]):
-                      isgoogle = True
-                    if ("Oracle" in shodan["org"]):
-                      isoracle = True
-                    if ("Digital Ocean" in shodan["org"]):
-                      isdigitalocean = True
-                    if ("Rackspace" in shodan["org"]):
-                      israckspace = True
+                    if (shodan["org"] is not None):
+                      print "\tOrg: %s" % (shodan["org"],)
+                      if ("Amazon" in shodan["org"]):
+                        isamazon = True
+                      if ("Microsoft Azure" in shodan["org"]):
+                        isazure = True
+                      if ("Google Cloud" in shodan["org"]):
+                        isgoogle = True
+                      if ("Oracle" in shodan["org"]):
+                        isoracle = True
+                      if ("Digital Ocean" in shodan["org"]):
+                        isdigitalocean = True
+                      if ("Rackspace" in shodan["org"]):
+                        israckspace = True
                   if shodan.has_key("data"):
                     for service in shodan["data"]:
                       if service.has_key("transport"):
