@@ -7,7 +7,6 @@ import urllib2
 import json
 
 domain = raw_input("What domain would you like to search? ")
-#queryDomain = "*.%s" % (domain, )
 print domain
 
 dnsnames = 0
@@ -257,27 +256,47 @@ if (len(dns) > 0):
     except socket.gaierror, err:
       pass
 
-print "DNS Entries: %s" % (dnsnames, )
-print "Live DNS Entries: %s" % (livehosts, )
-print "Unique IPs Analyzed: %s" % (len(ipaddresses), )
-print "\tPrivate IPs: %s" % (privateips, )
-print "\tAmazon: %s" % (amazon, )
-print "\tAzure: %s" % (azure, )
-print "\tGoogle: %s" % (google, )
-print "\tOracle: %s" % (oracle, )
-print "\tRackspace: %s" % (rackspace, )
-print "\tDigital Ocean: %s" % (digitalocean, )
-print "\tAkamai: %s" % (akamai, )
-print "Services: %s" % (liveservices, )
-print "\tHTTP(S): %s" % (httplisteners, )
-print "\tHTTP(S) 200 Responses: %s" % (http200s, )
-print "\tSSH: %s" % (sshlisteners, )
-print "\tSSL: %s" % (sslservices, )
-print "\t\tWildcard Certificates: %s" % (wildcardcert, )
-print "\t\tExpired Certificates: %s" % (expiredcerts, )
-print "Vulnerabilities: %s" % (vulnerabilities, )
-print "\tNone: %s" % severitynone
-print "\tLow: %s" % severitylow
-print "\tMedium: %s" % severitymedium
-print "\tHigh: %s" % severityhigh
-print "\tCritical: %s" % severitycritical
+summary = "<html><body><h1>%s</h1><br>\n" % (domain, )
+summary = summary + "<table cellpadding=0 cellspacing=0 border=1>\n"
+summary = summary + "<tr><td>DNS Entries</td><td align=right>%s</td></tr>\n" % (dnsnames, )
+summary = summary + "<tr><td>Live DNS Entries</td><td align=right>%s</td></tr>\n" % (livehosts, )
+summary = summary + "<tr><td>Hostings Information</td><td>\n"
+summary = summary + "\t<table cellpadding=5 cellspacing=0 border=1 bordercolor=gray width=100%>\n"
+summary = summary + "\t<tr><td>Total IPs Analyzed</td><td align=right>%s</td></tr>\n" % (len(ipaddresses), )
+summary = summary + "\t<tr><td>Private IPs</td><td align=right>%s</td></tr>\n" % (privateips, )
+summary = summary + "\t<tr><td>Amazon</td><td align=right>%s</td></tr>\n" % (amazon, )
+summary = summary + "\t<tr><td>Azure</td><td align=right>%s</td></tr>\n" % (azure, )
+summary = summary + "\t<tr><td>Google</td><td align=right>%s</td></tr>\n" % (google, )
+summary = summary + "\t<tr><td>Oracle</td><td align=right>%s</td></tr>\n" % (oracle, )
+summary = summary + "\t<tr><td>Rackspace</td><td align=right>%s</td></tr>\n" % (rackspace, )
+summary = summary + "\t<tr><td>Digital Ocean</td><td align=right>%s</td></tr>\n" % (digitalocean, )
+summary = summary + "\t<tr><td>Akamai</td><td align=right>%s</td></tr>\n" % (akamai, )
+summary = summary + "\t</table></td></tr>\n"
+summary = summary + "</tr><td>Services</td><td>\n"
+summary = summary + "\t<table cellpadding=5 cellspacing=0 border=1 bordercolor=gray width=100%>\n"
+summary = summary + "\t<tr><td>Total</td><td align=right>%s</td></tr>\n" % (liveservices, )
+summary = summary + "\t<tr><td>HTTP(S)</td><td align=right>%s</td></tr>\n" % (httplisteners, )
+summary = summary + "\t<tr><td>HTTP(S) 200s</td><td align=right>%s</td></tr>\n" % (http200s, )
+summary = summary + "\t<tr><td>SSH</td><td align=right>%s</td></tr>\n" % (sshlisteners, )
+summary = summary + "\t<tr><td>SSL</td><td align=right>%s</td></tr>\n" % (sslservices, )
+summary = summary + "\t</table></td></tr>\n"
+summary = summary + "<tr><td>Certificates</td><td>\n"
+summary = summary + "\t<table cellpadding=5 cellspacing=0 border=1 bordercolor=gray width=100%>\n"
+summary = summary + "\t<tr><td>Wildcard Certificates</td><td align=right>%s</td></tr>\n" % (wildcardcert, )
+summary = summary + "\t</tr><td>Expired Certificates</td><td align=right>%s</td></tr>\n" % (expiredcerts, )
+summary = summary + "\t</table></td></tr>\n"
+summary = summary + "\t<tr><td>Vulnerabilities</td><td>\n"
+summary = summary + "\t<table cellpadding=0 cellspacing=0 border=1 bordercolor=gray width=100%>\n"
+summary = summary + "\t<tr><td>Total</td><td align=right>%s</td></tr>\n" % (vulnerabilities, )
+summary = summary + "\t<tr><td>None</td><td align=right>%s</td></tr>\n" % severitynone
+summary = summary + "\t<tr><td>Low</td><td align=right>%s</td></tr>\n" % severitylow
+summary = summary + "\t<tr><td>Medium</td><td align=right>%s</td></tr>\n" % severitymedium
+summary = summary + "\t<tr><td>High</td><td align=right>%s</td></tr>\n" % severityhigh
+summary = summary + "\t<tr><td>Critical</td><td align=right>%s</td></tr>\n" % severitycritical
+summary = summary + "\t</table></td></tr>\n"
+summary = summary + "</table></body></html>"
+
+filename = domain.split(".")[0] + ".html"
+file = open(filename, "w")
+file.write(summary)
+file.close
