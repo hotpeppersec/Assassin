@@ -72,12 +72,42 @@ def checkPrivate(ip):
     return False
 
 def getCve(cve):
+  output = []
   url = "http://cve.circl.lu/api/cve/%s" % (cve, )
   try:
     jsonresponse = urllib2.urlopen(url)
+    cvss = ""
+    severity = ""
+    summary = ""
     try:
       response = json.loads(jsonresponse.read())
-      return response
+      if response.has_key("cvss"):
+        cvss = response["cvss"]
+        if (float(response["cvss"]) == 0):
+          severity = "None"
+          global severitynone
+          severitynone += 1
+        elif (0 < float(response["cvss"]) < 4):
+          severity = "Low"
+          global severitylow
+          severitylow += 1
+        elif (4 <= float(response["cvss"]) < 7):
+          severity = "Medium"
+          global severitymedium
+          severitymedium += 1
+        elif (7 <= float(response["cvss"]) < 9):
+          severity = "High"
+          global severityhigh
+          severityhigh += 1
+        elif (9 <= float(response["cvss"])):
+          severity = "Critical"
+          global severitycritical
+          severitycritical += 1
+        else:
+          severity = "Unknown"
+      if response.has_key("summary"):
+        summary = response["summary"]
+      return {"cvss": cvss, "severity": severity, "summary": summary}
     except ValueError as e:
       pass
   except urllib2.HTTPError, e:
@@ -153,28 +183,10 @@ if (len(dns) > 0):
                 if (shodan is not None):
                   if shodan.has_key("vulns"):
                     for vuln in shodan["vulns"]:
-                      vulnerabilities = vulnerabilities + 1  
-                      print "\tVulnerability: %s" % (vuln, )
+                      vulnerabilities += 1  
                       cvedata = getCve(vuln)
-                      if cvedata.has_key("cvss"):
-                        if (float(cvedata["cvss"]) == 0):
-                          severity = "None"
-                          severitynone = severitynone + 1
-                        elif (0 < float(cvedata["cvss"]) < 4):
-                          severity = "Low"
-                          severitylow = severitylow + 1
-                        elif (4 <= float(cvedata["cvss"]) < 7):
-                          severity = "Medium"
-                          severitymedium = severitymedium + 1
-                        elif (7 <= float(cvedata["cvss"]) < 9):
-                          severity = "High"
-                          severityhigh = severityhigh + 1
-                        elif (9 <= float(cvedata["cvss"])):
-                          severity = "Critical"
-                          severitycritical = severitycritical + 1
-                        else:
-                          severity = "Unknown"
-                        print "\t\tSeverity: %s - %s" % (cvedata["cvss"], severity)
+                      print "\tVulnerability: %s - %s - %s:" % (vuln, cvedata["cvss"], cvedata["severity"], )
+                      print "\t\t%s" % (cvedata["summary"], )
                   if shodan.has_key("org"):
                     if (shodan["org"] is not None):
                       print "\tOrg: %s" % (shodan["org"],)
