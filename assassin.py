@@ -7,7 +7,6 @@ import urllib2
 import json
 
 domain = raw_input("What domain would you like to search? ")
-print domain
 
 dnsnames = 0
 livehosts = 0
@@ -33,6 +32,7 @@ httplisteners = 0
 http200s = 0
 sshlisteners = 0
 ipaddresses = []
+report = ""
 
 def getDns(domain):
   output = []
@@ -40,7 +40,6 @@ def getDns(domain):
   try:
     response = urllib2.urlopen(url)
     domains = response.read().strip().split("\n")
-    #print domains
     for domain in domains:
       output.append(domain.split(",")[0])
     return output
@@ -64,6 +63,8 @@ def checkPrivate(ip):
   unicodeip = unicode(str(ip), "utf-8")
   if (ipaddress.ip_address(unicodeip)):
     if (ipaddress.ip_address(unicodeip).is_private):
+      global privateips
+      privateips += 1
       return True
     else:
       return False
@@ -118,20 +119,18 @@ if (len(dns) > 0):
   for host in dns:
     try:
       resolve = socket.gethostbyname_ex(host)
-      print host
+      report += "<br><font face=courier size=5>%s</font><br>\n" % (host, )
       if (len(resolve[1]) > 0):
-        livehosts = livehosts + 1
         for alias in resolve[1]:
-          print "\tAlias: %s" % (alias,)
+          report += "<font face=courier size=2>Alias: %s</font><br>\n" % (alias,)
       if (len(resolve[2]) > 0):
+        livehosts = livehosts + 1
         for ip in resolve[2]:
           if (ip in ipaddresses):
-            print "\t%s - IP address already analyzed" % (ip, )
+            report += "<font face=courier size=2>IP Address: %s - Already analyzed</font><br>\n" % (ip, )
           else:
             ipaddresses.append(ip)
-            if (checkPrivate(ip)):
-              privateips = privateips + 1
-            else:
+            if (not checkPrivate(ip)):
               isamazon = False
               isazure = False
               isgoogle = False
@@ -149,8 +148,8 @@ if (len(dns) > 0):
                   isgoogle = True
                 if("akamai" in reversedns):
                   isakamai = True
-                print "\tIP Address: %s" % (ip,)
-                print "\tReverse DNS: %s" % (reversedns,)
+                report += "<font face=courier size=2>IP Address: %s</font><br>\n" % (ip,)
+                report += "<font face=courier size=2>Reverse DNS: %s</font><br>\n" % (reversedns,)
                 try:
                   whoisclient = IPWhois(str(ip))
                   whoisresult = whoisclient.lookup_rdap(depth=1)
@@ -164,7 +163,7 @@ if (len(dns) > 0):
                       isgoogle = True
                     if ("Oracle Corporation" in whois):
                       isoracle = True
-                    print "\tWhois: %s" % (whois, )
+                    report += "<font face=courier size=2>Whois: %s</font><br>\n" % (whois, )
                   elif (whoisresult.has_key("asn_description")):
                     whois = whoisresult["asn_description"]
                     if ("Amazon.com" in whois):
@@ -175,7 +174,7 @@ if (len(dns) > 0):
                       isgoogle = True
                     if ("Oracle Corporation" in whois):
                       isoracle = True
-                    print "\tWhois: %s" % (whois, )
+                    report += "<font face=courier size=2>Whois: %s</font><br>\n" % (whois, )
                 except:
                   pass
                 shodan = getShodan(ip)
@@ -184,11 +183,11 @@ if (len(dns) > 0):
                     for vuln in shodan["vulns"]:
                       vulnerabilities += 1  
                       cvedata = getCve(vuln)
-                      print "\tVulnerability: %s - %s - %s:" % (vuln, cvedata["cvss"], cvedata["severity"], )
-                      print "\t\t%s" % (cvedata["summary"], )
+                      report += "<br><font face=courier size=2>Vulnerability: %s - %s - %s</font><br>\n" % (vuln, cvedata["cvss"], cvedata["severity"], )
+                      report += "<font face=courier size=1>%s</font><br>\n" % (cvedata["summary"], )
                   if shodan.has_key("org"):
                     if (shodan["org"] is not None):
-                      print "\tOrg: %s" % (shodan["org"],)
+                      report += "<font face=courier size=2>Org: %s</font><br>\n" % (shodan["org"],)
                       if ("Amazon" in shodan["org"]):
                         isamazon = True
                       if ("Microsoft Azure" in shodan["org"]):
@@ -204,12 +203,13 @@ if (len(dns) > 0):
                   if shodan.has_key("data"):
                     for service in shodan["data"]:
                       if service.has_key("transport"):
-                        print "\t\tTransport: %s" % (service["transport"], )
+                        report += "<br><font face=courier size=2>Transport: %s</font><br>\n" % (service["transport"], )
                       if service.has_key("port"):
-                        print "\t\tPort: %s" % (service["port"], )
+                        report += "<font face=courier size=2>Port: %s</font><br>\n" % (service["port"], )
                       if service.has_key("data"):
                         liveservices = liveservices + 1
-                        print "\t\tData:"
+                        report += "<font face=courier size=2>Data:</font><br>\n"
+                        report += "<xmp>"
                         data = service["data"].split("\n")                      
                         for rawline in data:
                           line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
@@ -220,23 +220,24 @@ if (len(dns) > 0):
                               http200s = http200s + 1
                             if ("SSH" in line):
                               sshlisteners = sshlisteners + 1
-                            print "\t\t\t%s" % (line, )
+                            report += line + "\n"
+                        report += "</xmp>"  
                       if service.has_key("ssl"):
                         sslservices = sslservices + 1
-                        print "\t\tSSL:"
+                        report += "<br><font face=courier size=2>SSL:</font><br>\n"
                         if service["ssl"].has_key("cert"):
                           if service["ssl"]["cert"].has_key("expired"):
                             if (service["ssl"]["cert"]["expired"] == True):
                               expiredcerts = expiredcerts + 1
-                            print "\t\t\tExpired: %s" % (service["ssl"]["cert"]["expired"], )
+                            report += "<font face=courier size=2>Expired: %s</font><br>\n" % (service["ssl"]["cert"]["expired"], )
                           if service["ssl"]["cert"].has_key("issuer"):
                             if service["ssl"]["cert"]["issuer"].has_key("O"):
-                              print "\t\t\tIssuer: %s" % (service["ssl"]["cert"]["issuer"]["O"], )
+                              report += "<font face=courier size=2>Issuer: %s</font><br>\n" % (service["ssl"]["cert"]["issuer"]["O"], )
                           if service["ssl"]["cert"].has_key("subject"):
                             if service["ssl"]["cert"]["subject"].has_key("CN"):
                               if("*" in service["ssl"]["cert"]["subject"]["CN"]):
                                 wildcardcert = wildcardcert + 1
-                              print "\t\t\tCommon Name: %s" % (service["ssl"]["cert"]["subject"]["CN"], )
+                              report += "<font face=courier size=2>Common Name: %s</font><br>\n" % (service["ssl"]["cert"]["subject"]["CN"], )
                 if (isamazon):
                   amazon = amazon + 1
                 if (isazure):
@@ -252,51 +253,44 @@ if (len(dns) > 0):
                 if (isakamai):
                   akamai = akamai + 1
               except socket.gaierror, err:
-                print "\t%s" % (ip,)
+                report += "<font face=courier size=2>%s</font><br>\n" % (ip,)
     except socket.gaierror, err:
       pass
 
-summary = "<html><body><h1>%s</h1><br>\n" % (domain, )
-summary = summary + "<table cellpadding=0 cellspacing=0 border=1>\n"
-summary = summary + "<tr><td>DNS Entries</td><td align=right>%s</td></tr>\n" % (dnsnames, )
-summary = summary + "<tr><td>Live DNS Entries</td><td align=right>%s</td></tr>\n" % (livehosts, )
-summary = summary + "<tr><td>Hostings Information</td><td>\n"
-summary = summary + "\t<table cellpadding=5 cellspacing=0 border=1 bordercolor=gray width=100%>\n"
-summary = summary + "\t<tr><td>Total IPs Analyzed</td><td align=right>%s</td></tr>\n" % (len(ipaddresses), )
-summary = summary + "\t<tr><td>Private IPs</td><td align=right>%s</td></tr>\n" % (privateips, )
-summary = summary + "\t<tr><td>Amazon</td><td align=right>%s</td></tr>\n" % (amazon, )
-summary = summary + "\t<tr><td>Azure</td><td align=right>%s</td></tr>\n" % (azure, )
-summary = summary + "\t<tr><td>Google</td><td align=right>%s</td></tr>\n" % (google, )
-summary = summary + "\t<tr><td>Oracle</td><td align=right>%s</td></tr>\n" % (oracle, )
-summary = summary + "\t<tr><td>Rackspace</td><td align=right>%s</td></tr>\n" % (rackspace, )
-summary = summary + "\t<tr><td>Digital Ocean</td><td align=right>%s</td></tr>\n" % (digitalocean, )
-summary = summary + "\t<tr><td>Akamai</td><td align=right>%s</td></tr>\n" % (akamai, )
-summary = summary + "\t</table></td></tr>\n"
-summary = summary + "</tr><td>Services</td><td>\n"
-summary = summary + "\t<table cellpadding=5 cellspacing=0 border=1 bordercolor=gray width=100%>\n"
-summary = summary + "\t<tr><td>Total</td><td align=right>%s</td></tr>\n" % (liveservices, )
-summary = summary + "\t<tr><td>HTTP(S)</td><td align=right>%s</td></tr>\n" % (httplisteners, )
-summary = summary + "\t<tr><td>HTTP(S) 200s</td><td align=right>%s</td></tr>\n" % (http200s, )
-summary = summary + "\t<tr><td>SSH</td><td align=right>%s</td></tr>\n" % (sshlisteners, )
-summary = summary + "\t<tr><td>SSL</td><td align=right>%s</td></tr>\n" % (sslservices, )
-summary = summary + "\t</table></td></tr>\n"
-summary = summary + "<tr><td>Certificates</td><td>\n"
-summary = summary + "\t<table cellpadding=5 cellspacing=0 border=1 bordercolor=gray width=100%>\n"
-summary = summary + "\t<tr><td>Wildcard Certificates</td><td align=right>%s</td></tr>\n" % (wildcardcert, )
-summary = summary + "\t</tr><td>Expired Certificates</td><td align=right>%s</td></tr>\n" % (expiredcerts, )
-summary = summary + "\t</table></td></tr>\n"
-summary = summary + "\t<tr><td>Vulnerabilities</td><td>\n"
-summary = summary + "\t<table cellpadding=0 cellspacing=0 border=1 bordercolor=gray width=100%>\n"
-summary = summary + "\t<tr><td>Total</td><td align=right>%s</td></tr>\n" % (vulnerabilities, )
-summary = summary + "\t<tr><td>None</td><td align=right>%s</td></tr>\n" % severitynone
-summary = summary + "\t<tr><td>Low</td><td align=right>%s</td></tr>\n" % severitylow
-summary = summary + "\t<tr><td>Medium</td><td align=right>%s</td></tr>\n" % severitymedium
-summary = summary + "\t<tr><td>High</td><td align=right>%s</td></tr>\n" % severityhigh
-summary = summary + "\t<tr><td>Critical</td><td align=right>%s</td></tr>\n" % severitycritical
-summary = summary + "\t</table></td></tr>\n"
-summary = summary + "</table></body></html>"
+summary = "<font face=courier size=10>\n"
+summary += "%s<br>\n" % (domain, )
+summary += "<font face=courier size=2><br>\n"
+summary += "DNS Entries: %s<br>\n" % (dnsnames, )
+summary += "Live DNS Entries: %s<br>\n" % (livehosts, )
+summary += "<br><font face=courier size=3>Hostings Information<font face=courier size=2><br>\n"
+summary += "Total IPs Analyzed: %s<br>\n" % (len(ipaddresses), )
+summary += "Private IPs: %s<br>\n" % (privateips, )
+summary += "Amazon: %s<br>\n" % (amazon, )
+summary += "Azure: %s<br>\n" % (azure, )
+summary += "Google: %s<br>\n" % (google, )
+summary += "Oracle: %s<br>\n" % (oracle, )
+summary += "Rackspace: %s<br>\n" % (rackspace, )
+summary += "Digital Ocean: %s<br>\n" % (digitalocean, )
+summary += "Akamai: %s<br>\n" % (akamai, )
+summary += "<br><font face=courier size=3>Services<font face=courier size=2><br>\n"
+summary += "Total: %s<br>\n" % (liveservices, )
+summary += "HTTP(S): %s<br>\n" % (httplisteners, )
+summary += "HTTP(S) 200s: %s<br>\n" % (http200s, )
+summary += "SSH: %s<br>\n" % (sshlisteners, )
+summary += "SSL: %s<br>\n" % (sslservices, )
+summary += "<br><font face=courier size=3>Certificates<font face=courier size=2><br>\n"
+summary += "Wildcard Certificates: %s<br>\n" % (wildcardcert, )
+summary += "Expired Certificates: %s<br>\n" % (expiredcerts, )
+summary += "<br><font face=courier size=3>Vulnerabilities<font face=courier size=2><br>\n"
+summary += "Total: %s<br>\n" % (vulnerabilities, )
+summary += "None: %s<br>\n" % (severitynone, )
+summary += "Low: %s<br>\n" % (severitylow, )
+summary += "Medium: %s<br>\n" % (severitymedium, )
+summary += "High: %s<br>\n" % (severityhigh, )
+summary += "Critical: %s<br>\n" % (severitycritical, )
 
 filename = domain.split(".")[0] + ".html"
 file = open(filename, "w")
 file.write(summary)
+file.write(report)
 file.close
