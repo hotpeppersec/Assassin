@@ -116,38 +116,24 @@ def getCve(cve):
 
 dns = getDns(domain)
 if (len(dns) > 0):
-  dnsnames = len(dns)
-  flip = 1  
+  dnsnames = (len(dns) + 1)
+  dnscounter = 1  
   for host in dns:
-    if (flip == 1):
-      stdout.write("\r-")
-      stdout.flush()
-      flip += 1
-    elif (flip == 2):
-      stdout.write("\r\\")
-      stdout.flush()
-      flip += 1
-    elif (flip == 3):
-      stdout.write("\r|")
-      stdout.flush()
-      flip += 1
-    elif (flip == 4):
-      stdout.write("\r/")
-      stdout.flush()
-      flip = 1
-    else:
-      flip = 1
+    stdout.write("\r" + str(dnscounter) + " out of " + str(dnsnames) + " DNS entries analyzed")
+    stdout.flush()
+    dnscounter += 1
     try:
       resolve = socket.gethostbyname_ex(host)
-      report += "<br><font face=courier size=5>%s</font><br>\n" % (host, )
+      report += '<div class="host">%s</div>\n' % (host, )
       if (len(resolve[1]) > 0):
+        report += '<div class="hostinfo">\n'
         for alias in resolve[1]:
-          report += "<font face=courier size=2>Alias: %s</font><br>\n" % (alias,)
+          report += "Alias: %s<br>\n" % (alias,)
       if (len(resolve[2]) > 0):
         livehosts = livehosts + 1
         for ip in resolve[2]:
           if (ip in ipaddresses):
-            report += "<font face=courier size=2>IP Address: %s - Already analyzed</font><br>\n" % (ip, )
+            report += "IP Address: %s - Already analyzed<br>\n" % (ip, )
           else:
             ipaddresses.append(ip)
             if (not checkPrivate(ip)):
@@ -168,7 +154,7 @@ if (len(dns) > 0):
                   isgoogle = True
                 if("akamai" in reversedns):
                   isakamai = True
-                report += "<font face=courier size=2>IP Address: %s</font><br>\n" % (ip,)
+                report += "IP Address: %s<br>\n" % (ip,)
                 report += "<font face=courier size=2>Reverse DNS: %s</font><br>\n" % (reversedns,)
                 try:
                   whoisclient = IPWhois(str(ip))
@@ -183,7 +169,7 @@ if (len(dns) > 0):
                       isgoogle = True
                     if ("Oracle Corporation" in whois):
                       isoracle = True
-                    report += "<font face=courier size=2>Whois: %s</font><br>\n" % (whois, )
+                    report += "Whois: %s<br>\n" % (whois, )
                   elif (whoisresult.has_key("asn_description")):
                     whois = whoisresult["asn_description"]
                     if ("Amazon.com" in whois):
@@ -194,7 +180,7 @@ if (len(dns) > 0):
                       isgoogle = True
                     if ("Oracle Corporation" in whois):
                       isoracle = True
-                    report += "<font face=courier size=2>Whois: %s</font><br>\n" % (whois, )
+                    report += "Whois: %s<br>\n" % (whois, )
                 except:
                   pass
                 shodan = getShodan(ip)
@@ -220,16 +206,16 @@ if (len(dns) > 0):
                         isdigitalocean = True
                       if ("Rackspace" in shodan["org"]):
                         israckspace = True
+                  else:
+                    report += "</div>\n"
                   if shodan.has_key("data"):
                     for service in shodan["data"]:
-                      if service.has_key("transport"):
-                        report += "<br><font face=courier size=2>Transport: %s</font><br>\n" % (service["transport"], )
-                      if service.has_key("port"):
-                        report += "<font face=courier size=2>Port: %s</font><br>\n" % (service["port"], )
+                      serviceport = ""
+                      if service.has_key("transport") and service.has_key("port"):
+                        report += '<div class="serviceport">%s/%s</div>\n' % (service["transport"], service["port"])
                       if service.has_key("data"):
                         liveservices = liveservices + 1
-                        report += "<font face=courier size=2>Data:</font><br>\n"
-                        report += "<xmp>"
+                        report += "<xmp>\n"
                         data = service["data"].split("\n")                      
                         for rawline in data:
                           line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
@@ -241,37 +227,40 @@ if (len(dns) > 0):
                             if ("SSH" in line):
                               sshlisteners = sshlisteners + 1
                             report += line + "\n"
-                        report += "</xmp>"  
+                        report += "</xmp>\n"  
                       if service.has_key("ssl"):
-                        sslservices = sslservices + 1
-                        report += "<br><font face=courier size=2>SSL:</font><br>\n"
+                        sslservices += 1
+                        report += '<div class="ssl">SSL<br>\n'
                         if service["ssl"].has_key("cert"):
                           if service["ssl"]["cert"].has_key("expired"):
                             if (service["ssl"]["cert"]["expired"] == True):
-                              expiredcerts = expiredcerts + 1
-                            report += "<font face=courier size=2>Expired: %s</font><br>\n" % (service["ssl"]["cert"]["expired"], )
+                              expiredcerts += 1
+                            report += "Expired: %s<br>\n" % (service["ssl"]["cert"]["expired"], )
                           if service["ssl"]["cert"].has_key("issuer"):
                             if service["ssl"]["cert"]["issuer"].has_key("O"):
-                              report += "<font face=courier size=2>Issuer: %s</font><br>\n" % (service["ssl"]["cert"]["issuer"]["O"], )
+                              report += "Issuer: %s<br>\n" % (service["ssl"]["cert"]["issuer"]["O"], )
                           if service["ssl"]["cert"].has_key("subject"):
                             if service["ssl"]["cert"]["subject"].has_key("CN"):
                               if("*" in service["ssl"]["cert"]["subject"]["CN"]):
-                                wildcardcert = wildcardcert + 1
-                              report += "<font face=courier size=2>Common Name: %s</font><br>\n" % (service["ssl"]["cert"]["subject"]["CN"], )
+                                wildcardcert += 1
+                              report += "Common Name: %s<br>\n" % (service["ssl"]["cert"]["subject"]["CN"], )
+                        report += "</div>\n"
+                else:
+                  report += "</div>\n"
                 if (isamazon):
-                  amazon = amazon + 1
+                  amazon += 1
                 if (isazure):
-                  azure = azure + 1
+                  azure += 1
                 if (isgoogle):
-                  google = google + 1
+                  google += 1
                 if (isoracle):
-                  oracle = oracle + 1
+                  oracle += 1
                 if (isdigitalocean):
-                  digitalocean = digitalocean + 1
+                  digitalocean += 1
                 if (israckspace):
-                  rackspace = rackspace + 1
+                  rackspace += 1
                 if (isakamai):
-                  akamai = akamai + 1
+                  akamai += 1
               except socket.gaierror, err:
                 report += "<font face=courier size=2>%s</font><br>\n" % (ip,)
     except socket.gaierror, err:
@@ -309,8 +298,29 @@ summary += "Medium: %s<br>\n" % (severitymedium, )
 summary += "High: %s<br>\n" % (severityhigh, )
 summary += "Critical: %s<br>\n" % (severitycritical, )
 
+css = "<head>\n"
+css += "<style>\n"
+css += "div.host {\n"
+css += "\tfont: 15pt courier;\n"
+css += "}\n\n"
+css += "div.serviceport {\n"
+css += "\tfont: 9pt courier;\n"
+css += "\tmargin-left: 50px;\n"
+css += "}\n\n"
+css += "xmp {\n"
+css += "\tfont: 7pt courier;\n"
+css +="\tmargin-left: 100px;\n"
+css += "}\n\n"
+css += "div.ssl {\n"
+css += "\tfont: 7pt courier;\n"
+css += "\tmargin-left: 100px;\n"
+css += "}\n"
+css += "</style>\n"
+css += "</head>\n\n"
+
 filename = domain.split(".")[0] + ".html"
 file = open(filename, "w")
+file.write(css)
 file.write(summary)
 file.write(report)
 file.close
