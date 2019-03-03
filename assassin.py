@@ -155,7 +155,7 @@ if (len(dns) > 0):
                 if("akamai" in reversedns):
                   isakamai = True
                 report += "IP Address: %s<br>\n" % (ip,)
-                report += "<font face=courier size=2>Reverse DNS: %s</font><br>\n" % (reversedns,)
+                report += "Reverse DNS: %s<br>\n" % (reversedns,)
                 try:
                   whoisclient = IPWhois(str(ip))
                   whoisresult = whoisclient.lookup_rdap(depth=4)
@@ -215,7 +215,7 @@ if (len(dns) > 0):
                         report += '<div class="serviceport">%s/%s</div>\n' % (service["transport"], service["port"])
                       if service.has_key("data"):
                         liveservices = liveservices + 1
-                        report += "<xmp>\n"
+                        report += "<xmp>"
                         data = service["data"].split("\n")                      
                         for rawline in data:
                           line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
@@ -302,15 +302,18 @@ css = "<head>\n"
 css += "<style>\n"
 css += "div.host {\n"
 css += "\tfont: 15pt courier;\n"
-css += "}\n\n"
+css += "}\n"
+css += "div.hostinfo {\n"
+css += "\tfont: 11pt courier;\n"
+css += "}\n"
 css += "div.serviceport {\n"
 css += "\tfont: 9pt courier;\n"
 css += "\tmargin-left: 50px;\n"
-css += "}\n\n"
+css += "}\n"
 css += "xmp {\n"
 css += "\tfont: 7pt courier;\n"
 css +="\tmargin-left: 100px;\n"
-css += "}\n\n"
+css += "}\n"
 css += "div.ssl {\n"
 css += "\tfont: 7pt courier;\n"
 css += "\tmargin-left: 100px;\n"
