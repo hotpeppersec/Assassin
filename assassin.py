@@ -5,6 +5,7 @@ import ipaddress
 from ipwhois import IPWhois
 import urllib2
 import json
+from sys import stdout
 
 domain = raw_input("What domain would you like to search? ")
 
@@ -115,8 +116,27 @@ def getCve(cve):
 
 dns = getDns(domain)
 if (len(dns) > 0):
-  dnsnames = len(dns)  
+  dnsnames = len(dns)
+  flip = 1  
   for host in dns:
+    if (flip == 1):
+      stdout.write("\r-")
+      stdout.flush()
+      flip += 1
+    elif (flip == 2):
+      stdout.write("\r\\")
+      stdout.flush()
+      flip += 1
+    elif (flip == 3):
+      stdout.write("\r|")
+      stdout.flush()
+      flip += 1
+    elif (flip == 4):
+      stdout.write("\r/")
+      stdout.flush()
+      flip = 1
+    else:
+      flip = 1
     try:
       resolve = socket.gethostbyname_ex(host)
       report += "<br><font face=courier size=5>%s</font><br>\n" % (host, )
@@ -152,7 +172,7 @@ if (len(dns) > 0):
                 report += "<font face=courier size=2>Reverse DNS: %s</font><br>\n" % (reversedns,)
                 try:
                   whoisclient = IPWhois(str(ip))
-                  whoisresult = whoisclient.lookup_rdap(depth=1)
+                  whoisresult = whoisclient.lookup_rdap(depth=4)
                   if (whoisresult.has_key("org_name")):
                     whois = whoisresult["org_name"]
                     if ("Amazon.com" in whois):
@@ -294,3 +314,4 @@ file = open(filename, "w")
 file.write(summary)
 file.write(report)
 file.close
+
