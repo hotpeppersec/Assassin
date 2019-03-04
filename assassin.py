@@ -171,7 +171,7 @@ if (len(dns) > 0):
 
             #Check to see if the IP address is private
             if (checkPrivate(ip)):
-              #The IP address is private - increment the private P address counter for the summary
+              #The IP address is private - increment the private IP address counter for the summary
               privateips += 1
 
             else:
@@ -193,6 +193,8 @@ if (len(dns) > 0):
               #WhoIs should also give a clue about the hosting provider
               try:
                 whoisresult = getWhois(ip)
+
+                report += "WhoIs: %s<br>\n" % (whoisresult, )
 
                 if whoisresult in whoisids:
                   whoisids[whoisresult] += 1
