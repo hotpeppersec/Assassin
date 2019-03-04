@@ -2,7 +2,6 @@
 
 import socket
 import ipaddress
-from ipwhois import IPWhois
 import urllib2
 import json
 from sys import stdout
@@ -15,6 +14,7 @@ dnsnames = 0
 livehosts = 0
 privateips = 0
 hosting = {}
+whoisids = {}
 liveservices = 0
 vulnerabilities = 0
 severitynone = 0
@@ -51,9 +51,9 @@ def getShodan(ip):
     try:
       response = json.loads(jsonresponse.read())
       return response  
-    except ValueError as e:
+    except:
       pass
-  except urllib2.HTTPError, e:
+  except:
     pass
 
 def checkPrivate(ip):
@@ -65,6 +65,20 @@ def checkPrivate(ip):
       return False
   else:
     return False
+
+def getWhois(ip):
+  output = ""
+  url = "http://rdap.arin.net/registry/ip/%s" % (ip, )
+  try:
+    jsonresponse = urllib2.urlopen(url)
+    response=json.loads(jsonresponse.read())
+    if response.has_key("name"):
+      output = response["name"]
+    elif response.has_key("entities"):
+      output = response["entities"][0]["handle"]
+  except:
+    pass
+  return output
 
 def getCve(cve):
   output = []
@@ -178,32 +192,12 @@ if (len(dns) > 0):
 
               #WhoIs should also give a clue about the hosting provider
               try:
-                whoisclient = IPWhois(str(ip))
-                whoisresult = whoisclient.lookup_rdap(depth=4)
+                whoisresult = getWhois(ip)
 
-                #The whois client returns data in two useful areas, either org_name or asn_description.  We're checking for ogr_name first
-                if (whoisresult.has_key("org_name")):
-                  whois = whoisresult["org_name"]
-
-                  #add the whois data into the report
-                  report += "Whois: %s<br>\n" % (whois, )
-
-                  if hosting.has_key(whois):
-                    hosting[whois] += 1
-                  else:
-                    hosting[whois] = 1
-
-                  #If the org_name is not returned, we should check for asn_description
-                elif (whoisresult.has_key("asn_description")):
-                  whois = whoisresult["asn_description"]
-
-                  #Add asn_description into the report
-                  report += "Whois: %s<br>\n" % (whois, )
-
-                  if hosting.has_key(whois):
-                    hosting[whois] += 1
-                  else:
-                    hosting[whois] = 1
+                if whoisresult in whoisids:
+                  whoisids[whoisresult] += 1
+                else:
+                  whoisids[whoisresult] = 1
 
               #What to do if whois lookup fails
               except:
@@ -265,8 +259,7 @@ if (len(dns) > 0):
     except socket.gaierror, err:
       pass
 
-summary = "<font face=courier size=10>\n"
-summary += "%s\n" % (domain, )
+summary = "<font face=courier size=10>%s</font>\n" % (domain, )
 summary += '<div class="summarydata">\n'
 summary += "DNS Entries: %s<br>\n" % (dnsnames, )
 summary += "Live DNS Entries: %s<br>\n" % (livehosts, )
@@ -277,6 +270,8 @@ summary += "Total IPs Analyzed: %s<br>\n" % (len(ipaddresses), )
 summary += "Private IPs: %s<br>\n" % (privateips, )
 for host in hosting:
   summary += "%s: %s<br>\n" % (host, hosting[host])
+for whoisid in whoisids:
+  summary += "%s: %s<br>\n" % (whoisid, whoisids[whoisid])
 #summary += "Amazon: %s<br>\n" % (amazon, )
 #summary += "Azure: %s<br>\n" % (azure, )
 #summary += "Google: %s<br>\n" % (google, )
@@ -311,29 +306,29 @@ summary += "</div>"
 css = "<head>\n"
 css += "<style>\n"
 css += "div.summaryheader {\n"
-css += "\tfont: 15pt courier;\n"
+css += "\tfont: 13pt courier;\n"
 css += "}\n"
 css += "div.summarydata {\n"
 css += "\tfont: 11pt courier;\n"
 css += "\tmargin-left: 25px;\n"
 css += "}\n"
 css += "div.host {\n"
-css += "\tfont: 15pt courier;\n"
+css += "\tfont: 13pt courier;\n"
 css += "}\n"
 css += "div.hostinfo {\n"
 css += "\tfont: 11pt courier;\n"
 css += "}\n"
 css += "div.serviceport {\n"
 css += "\tfont: 9pt courier;\n"
-css += "\tmargin-left: 50px;\n"
+css += "\tmargin-left: 25px;\n"
 css += "}\n"
 css += "xmp {\n"
 css += "\tfont: 7pt courier;\n"
-css +="\tmargin-left: 100px;\n"
+css +="\tmargin-left: 50px;\n"
 css += "}\n"
 css += "div.ssl {\n"
 css += "\tfont: 7pt courier;\n"
-css += "\tmargin-left: 100px;\n"
+css += "\tmargin-left: 50px;\n"
 css += "}\n"
 css += "</style>\n"
 css += "</head>\n\n"
