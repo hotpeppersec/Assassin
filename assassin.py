@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import socket
 import ipaddress
 import urllib2
 import json
@@ -42,6 +41,64 @@ def getDns(domain):
     return output
   except urllib2.HTTPError, e:
     pass
+
+def getFwdDns(host):
+  output = []
+  url='https://dns.google.com/resolve?name=%s&type=A' % (host, )
+  try:
+    jsonresponse = urllib2.urlopen(url)
+    try:
+      response = json.loads(jsonresponse.read())
+      if response.has_key("Answer"):
+        answers = response["Answer"]
+        for answer in answers:
+          if answer.has_key("data"):
+            try:
+              address = ipaddress.ip_address(answer["data"])
+              output.append(answer["data"].encode("ascii"))
+            except ValueError as e:
+              secondurl='https://dns.google.com/resolve?name=%s&type=A' % (answer["data"], )
+              try:
+                secondjson = urllib2.urlopen(secondurl)
+                try:
+                  secondresponse = json.loads(jsonresponse.read())
+                  if secondresponse.has_key("Answer"):
+                    secondanswers = secondresponse["Answer"]
+                    for secondanswer in secondanswers:
+                      if secondanswer.has_key("data"):
+                        try:
+                          secondaddress = ipaddress.ip_address(secondanswer["data"])
+                          output.append(secondanswer["data"].encode("ascii"))
+                        except ValueError as e:
+                          pass
+                except:
+                  pass
+              except:
+                pass
+    except:
+      pass
+  except:
+    pass
+  return output
+
+def getRevDns(ip):
+  reverseip = "%s.%s.%s.%s.in-addr.arpa." % (ip.split(".")[3], ip.split(".")[2], ip.split(".")[1], ip.split(".")[0])
+  output = ""
+  url='https://dns.google.com/resolve?name=%s&type=PTR' % (reverseip, )
+  try:
+    jsonresponse = urllib2.urlopen(url)
+    try:
+      response = json.loads(jsonresponse.read())
+      if response.has_key("Answer"):
+        answers = response["Answer"]
+        for answer in answers:
+          if answer.has_key("data"):
+            output = answer["data"].encode("ascii")
+    except:
+      pass
+  except:
+    pass
+  return output
 
 def getShodan(ip):
   shodankey='C9tNjcBpKWoDmuqbbZ9lzeXKrv58iug8'
@@ -129,7 +186,7 @@ dns = getDns(domain)
 if (len(dns) > 0):
 
   #This will be used in the summary report
-  dnsnames = (len(dns) + 1)
+  dnsnames = len(dns)
 
   #This gives us a nice status indicator on the CLI so the operator knows the script is still running
   dnscounter = 1  
@@ -140,126 +197,105 @@ if (len(dns) > 0):
     report += '<div class="host">%s</div>\n' % (host, )
 
     #DNS resolve the hostname (This should probably be moved to a function)
-    try:
-      resolve = socket.gethostbyname_ex(host)
+    resolve = getFwdDns(host)
 
-      #Check for alias resolution: just adding the data to the report for now - not recursively resolving these names
-      if (len(resolve[1]) > 0):
-        report += '<div class="hostinfo">\n'
-        for alias in resolve[1]:
-          report += "Alias: %s<br>\n" % (alias,)
-        report += "</div>\n"
+    #Check for IP addresses in DNS resolution
+    if (len(resolve) > 0):
 
-      #Check for IP addresses in DNS resolution
-      if (len(resolve[2]) > 0):
+      #This is used in the summary report
+      livehosts += 1
 
-        #This is used in the summary report
-        livehosts += 1
+      for ip in resolve:
 
-        for ip in resolve[2]:
+        #We don't want to process the same IP address over and over - check to see if IP has already been processed
+        if (ip in ipaddresses):
+          report += '<div class="hostinfo">IP Address: %s - Already analyzed</div>\n' % (ip, )
 
-          #We don't want to process the same IP address over and over - check to see if IP has already been processed
-          if (ip in ipaddresses):
-            report += '<div class="hostinfo">IP Address: %s - Already analyzed</div>\n' % (ip, )
+        else:
+          #Add IP address to the list of processed addresses
+          ipaddresses.append(ip)
+
+          report += '<div class="hostinfo">\n'
+          report += "IP Address: %s<br>\n" % (ip, )
+
+          #Check to see if the IP address is private
+          if (checkPrivate(ip)):
+            #The IP address is private - increment the private IP address counter for the summary
+            privateips += 1
+            report += "</div>\n"
 
           else:
-            #Add IP address to the list of processed addresses
-            ipaddresses.append(ip)
+            #Some hosting services include their identity in reverse DNS information
+            reversedns = getRevDns(ip)
 
-            report += '<div class="hostinfo">\n'
-            report += "IP Address: %s<br>\n" % (ip, )
+            if (len(reversedns) > 0):
+              report += "Reverse DNS: %s<br>\n" % (reversedns,)
 
-            #Check to see if the IP address is private
-            if (checkPrivate(ip)):
-              #The IP address is private - increment the private IP address counter for the summary
-              privateips += 1
-
+            #WhoIs should also give a clue about the hosting provider
+            whoisresult = getWhois(ip)
+            report += "Whois: %s<br>\n" % (whoisresult, )
+            if whoisresult in whoisids:
+              whoisids[whoisresult] += 1
             else:
-              #The IP address is public - time to set some variables and try to figure out who is hosting these IPs
+              whoisids[whoisresult] = 1
 
-              #Some hosting services include their identity in reverse DNS information
-              try:
-                reversedns = socket.getfqdn(ip)
-
-                #When reverse DNS does not find an entry, it just returns the IP address.
-                if (reversedns != ip):
-
-                  report += "Reverse DNS: %s<br>\n" % (reversedns,)
-
-              #What to do if there is a DNS resolution error
-              except:
-                pass
-
-              #WhoIs should also give a clue about the hosting provider
-              try:
-                whoisresult = getWhois(ip)
-
-                report += "WhoIs: %s<br>\n" % (whoisresult, )
-
-                if whoisresult in whoisids:
-                  whoisids[whoisresult] += 1
-                else:
-                  whoisids[whoisresult] = 1
-
-              #What to do if whois lookup fails
-              except:
-                pass
-
-              shodan = getShodan(ip)
-              if (shodan is not None):
-                if shodan.has_key("vulns"):
-                  for vuln in shodan["vulns"]:
-                    vulnerabilities += 1  
-                    cvedata = getCve(vuln)
-                    report += "<br><font face=courier size=2>Vulnerability: %s - %s - %s</font><br>\n" % (vuln, cvedata["cvss"], cvedata["severity"], )
-                    report += "<font face=courier size=1>%s</font><br>\n" % (cvedata["summary"], )
-                if shodan.has_key("org"):
-                  if (shodan["org"] is not None):
-                    report += "<font face=courier size=2>Org: %s</font><br>\n" % (shodan["org"],)
-                else:
+            shodan = getShodan(ip)
+            if (shodan is None):
+              report += "</div>\n"
+            elif (shodan is not None):
+              if shodan.has_key("vulns"):
+                for vuln in shodan["vulns"]:
+                  vulnerabilities += 1  
+                  cvedata = getCve(vuln)
+                  report += "<br><font face=courier size=2>Vulnerability: %s - %s - %s</font><br>\n" % (vuln, cvedata["cvss"], cvedata["severity"], )
+                  report += "<font face=courier size=1>%s</font><br>\n" % (cvedata["summary"], )
+              if shodan.has_key("org"):
+                if (shodan["org"] is not None):
+                  report += "Org: %s<br>\n" % (shodan["org"],)
                   report += "</div>\n"
-                if shodan.has_key("data"):
-                  for service in shodan["data"]:
-                    serviceport = ""
-                    if service.has_key("transport") and service.has_key("port"):
-                      report += '<div class="serviceport">%s/%s</div>\n' % (service["transport"], service["port"])
-                    if service.has_key("data"):
-                      liveservices = liveservices + 1
-                      report += "<xmp>"
-                      data = service["data"].split("\n")                      
-                      for rawline in data:
-                        line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
-                        if (len(line) > 0):
-                          if ("HTTP" in line):
-                            httplisteners = httplisteners + 1
-                          if ("HTTP/1.1 200 OK" in line):
-                            http200s = http200s + 1
-                          if ("SSH" in line):
-                            sshlisteners = sshlisteners + 1
-                          report += line + "\n"
-                      report += "</xmp>\n"  
-                    if service.has_key("ssl"):
-                      sslservices += 1
-                      report += '<div class="ssl">SSL<br>\n'
-                      if service["ssl"].has_key("cert"):
-                        if service["ssl"]["cert"].has_key("expired"):
-                          if (service["ssl"]["cert"]["expired"] == True):
-                            expiredcerts += 1
-                          report += "Expired: %s<br>\n" % (service["ssl"]["cert"]["expired"], )
-                        if service["ssl"]["cert"].has_key("issuer"):
-                          if service["ssl"]["cert"]["issuer"].has_key("O"):
-                            report += "Issuer: %s<br>\n" % (service["ssl"]["cert"]["issuer"]["O"], )
-                        if service["ssl"]["cert"].has_key("subject"):
-                          if service["ssl"]["cert"]["subject"].has_key("CN"):
-                            if("*" in service["ssl"]["cert"]["subject"]["CN"]):
-                              wildcardcert += 1
-                            report += "Common Name: %s<br>\n" % (service["ssl"]["cert"]["subject"]["CN"], )
-                      report += "</div>\n"
               else:
                 report += "</div>\n"
-
-    except socket.gaierror, err:
-      pass
+              if shodan.has_key("data"):
+                for service in shodan["data"]:
+                  serviceport = ""
+                  if service.has_key("transport") and service.has_key("port"):
+                    report += '<div class="serviceport">%s/%s</div>\n' % (service["transport"], service["port"])
+                  if service.has_key("data"):
+                    liveservices = liveservices + 1
+                    report += "<xmp>"
+                    data = service["data"].split("\n")                      
+                    for rawline in data:
+                      line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
+                      if (len(line) > 0):
+                        if ("HTTP" in line):
+                          httplisteners = httplisteners + 1
+                        if ("HTTP/1.1 200 OK" in line):
+                          http200s = http200s + 1
+                        if ("SSH" in line):
+                          sshlisteners = sshlisteners + 1
+                        report += line + "\n"
+                    report += "</xmp>\n"  
+                  if service.has_key("ssl"):
+                    sslservices += 1
+                    report += '<div class="ssl">SSL<br>\n'
+                    if service["ssl"].has_key("cert"):
+                      if service["ssl"]["cert"].has_key("expired"):
+                        if (service["ssl"]["cert"]["expired"] == True):
+                          expiredcerts += 1
+                        report += "Expired: %s<br>\n" % (service["ssl"]["cert"]["expired"], )
+                      if service["ssl"]["cert"].has_key("issuer"):
+                        if service["ssl"]["cert"]["issuer"].has_key("O"):
+                          report += "Issuer: %s<br>\n" % (service["ssl"]["cert"]["issuer"]["O"], )
+                      if service["ssl"]["cert"].has_key("subject"):
+                        if service["ssl"]["cert"]["subject"].has_key("CN"):
+                          if("*" in service["ssl"]["cert"]["subject"]["CN"]):
+                            wildcardcert += 1
+                          report += "Common Name: %s<br>\n" % (service["ssl"]["cert"]["subject"]["CN"], )
+                    report += "</div>\n"
+            else:
+              report += "</div>\n"
+    else:
+      report += "</div>\n"
 
 summary = "<font face=courier size=10>%s</font>\n" % (domain, )
 summary += '<div class="summarydata">\n'
@@ -270,17 +306,6 @@ summary += '<div class="summaryheader">Hostings Information</div>\n'
 summary += '<div class="summarydata">\n'
 summary += "Total IPs Analyzed: %s<br>\n" % (len(ipaddresses), )
 summary += "Private IPs: %s<br>\n" % (privateips, )
-for host in hosting:
-  summary += "%s: %s<br>\n" % (host, hosting[host])
-for whoisid in whoisids:
-  summary += "%s: %s<br>\n" % (whoisid, whoisids[whoisid])
-#summary += "Amazon: %s<br>\n" % (amazon, )
-#summary += "Azure: %s<br>\n" % (azure, )
-#summary += "Google: %s<br>\n" % (google, )
-#summary += "Oracle: %s<br>\n" % (oracle, )
-#summary += "Rackspace: %s<br>\n" % (rackspace, )
-#summary += "Digital Ocean: %s<br>\n" % (digitalocean, )
-#summary += "Akamai: %s<br>\n" % (akamai, )
 summary += "</div>\n"
 summary += '<div class="summaryheader">Services<div>\n'
 summary += '<div class="summarydata">\n'
@@ -319,10 +344,11 @@ css += "\tfont: 13pt courier;\n"
 css += "}\n"
 css += "div.hostinfo {\n"
 css += "\tfont: 11pt courier;\n"
+css += "\tmargin-left: 25px;\n"
 css += "}\n"
 css += "div.serviceport {\n"
 css += "\tfont: 9pt courier;\n"
-css += "\tmargin-left: 25px;\n"
+css += "\tmargin-left: 50px;\n"
 css += "}\n"
 css += "xmp {\n"
 css += "\tfont: 7pt courier;\n"
@@ -330,7 +356,7 @@ css +="\tmargin-left: 50px;\n"
 css += "}\n"
 css += "div.ssl {\n"
 css += "\tfont: 7pt courier;\n"
-css += "\tmargin-left: 50px;\n"
+css += "\tmargin-left: 75px;\n"
 css += "}\n"
 css += "</style>\n"
 css += "</head>\n\n"
