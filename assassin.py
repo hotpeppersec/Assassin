@@ -42,6 +42,22 @@ def getDns(domain):
   except urllib2.HTTPError, e:
     pass
 
+def getDnsdb(domain):
+  dnsdbkey = "dce-cc9d0395d2c77b3bc8fe487a5e9c65059667137b74d7e588585fac7321e9"
+  urlbase = "https://api.dnsdb.info/lookup/rrset/name/"
+  headers = { "X-API-Key": dnsdbkey }
+  data = ""
+  url = "%s*.%s/A" % (urlbase, domain)
+  output = []
+  request = urllib2.Request(url, data, headers)
+  response = urllib2.urlopen(request)
+  for result in response.read().split("\n"):
+    if (result.strip() != "" and result[0] != ";"):
+      fields = result.split(" ")
+      if (fields[2] == "A"):
+        output.append(fields[0].rstrip('.'))
+  return output
+
 def getFwdDns(host):
   output = []
   url='https://dns.google.com/resolve?name=%s&type=A' % (host, )
@@ -181,6 +197,16 @@ def getCve(cve):
 
 # Get DNS data for domain from HackerTarget
 dns = getDns(domain)
+
+#get DNS data from dnsdb
+dnsdb = getDnsdb(domain)
+
+#add DNS entries from dnsdb into the hacker target data
+for name in dnsdb:
+  if name not in dns:
+    dns.append(name)
+
+print dns
 
 #Make sure we get a result
 if (len(dns) > 0):
