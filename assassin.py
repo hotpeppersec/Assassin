@@ -10,6 +10,8 @@ domain = raw_input("What domain would you like to search? ")
 
 #These will be used in the summary report generated at the end of the script
 dnsnames = 0
+htdns = 0
+dnsdbdns = 0
 livehosts = 0
 privateips = 0
 hosting = {}
@@ -197,16 +199,18 @@ def getCve(cve):
 
 # Get DNS data for domain from HackerTarget
 dns = getDns(domain)
+htdns = len(dns)
 
 #get DNS data from dnsdb
 dnsdb = getDnsdb(domain)
+dnsdbdns = len(dnsdb)
 
 #add DNS entries from dnsdb into the hacker target data
 for name in dnsdb:
   if name not in dns:
     dns.append(name)
 
-print dns
+dnsnames = len(dns)
 
 #Make sure we get a result
 if (len(dns) > 0):
@@ -325,7 +329,9 @@ if (len(dns) > 0):
 
 summary = "<font face=courier size=10>%s</font>\n" % (domain, )
 summary += '<div class="summarydata">\n'
-summary += "DNS Entries: %s<br>\n" % (dnsnames, )
+summary += "Hacker Target DNS Entries: %s<br>\n" % (htdns, )
+summary += "DNSDB DNS Entries: %s<br>\n" % (dnsdbdns, )
+summary += "Total De-Duplicated DNS Entries: %s<br>\n" % (dnsnames, )
 summary += "Live DNS Entries: %s<br>\n" % (livehosts, )
 summary += "</div>\n"
 summary += '<div class="summaryheader">Hostings Information</div>\n'
