@@ -203,15 +203,38 @@ else:
                 if service.has_key('data'):
                   report.write('<div class="data">\n')
                   report.write('<pre>')
-                  report.write(service['data'].strip())
+                  report.write(service['data'].strip().replace("<", "&lt").replace(">", "&gt"))
                   report.write('</pre>\n')
                   report.write('</div>\n')
 
                 if "HTTP" in str(service['data']).split('\n')[0]:
-                  if str(service['data']).split('\n')[0].split(' ')[1] == "200":
-                    report.write('<span class="datawarning">HTTP 200</span>')
-                  if str(service['data']).split('\n')[0].split(' ')[1] == "500":
-                    report.write('<span class="dataerror">HTTP 500</span>')
+                  httpstatus = str(service['data']).split('\n')[0].split(' ')[1]
+                  if httpstatus == "200":
+                    report.write('<span class="datawarning">Valid Response with IP Scan</span>')
+                  if httpstatus == "500":
+                    report.write('<span class="dataerror">Internal Server Error</span>')
+                  if httpstatus == "501":
+                    report.write('<span class="dataerror">Not Implemented</span>')
+                  if httpstatus == "502":
+                    report.write('<span class="dataerror">Bad Gateway</span>')
+                  if httpstatus == "503":
+                    report.write('<span class="dataerror">Service Unavailable</span>')
+                  if httpstatus == "504":
+                    report.write('<span class="dataerror">Gateway Timeout</span>')
+                  if httpstatus == "505":
+                    report.write('<span class="dataerror">HTTP Version Not Supported</span>')
+                  if httpstatus == "506":
+                    report.write('<span class="dataerror">Variant Also Negotiates</span>')
+                  if httpstatus == "507":
+                    report.write('<span class="dataerror">Insufficient Storage</span>')
+                  if httpstatus == "508":
+                    report.write('<span class="dataerror">Loop Detected</span>')
+                  if httpstatus == "510":
+                    report.write('<span class="dataerror">Not Extended</span>')
+                  if httpstatus == "511":
+                    report.write('<span class="dataerror">Network Authentication Required</span>')
+                  if httpstatus == "599":
+                    report.write('<span class="dataerror">Network Connection Timeout Error</span>')
 
                 if service.has_key('ssl'):
                   report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
