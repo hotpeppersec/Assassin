@@ -219,7 +219,6 @@ else:
                     report.write('<span class="sslerror">Expired</span>')
                   if service['ssl']['cert']['subject']['CN'][0] == "*":
                     report.write('<span class="sslwarning">Wildcard</span>')
-                  report.write('</div>\n')
 
                 if service.has_key('vulns'):
                   report.write('<table class="vulnerability">\n')
@@ -247,4 +246,6 @@ else:
                       report.write("<td>%s</td>" % (vulns[vuln]['summary'], ))
                       report.write("</tr>\n")
                   report.write("</table>")
-                  report.write('</div>\n')
+ 
+report.write('</body>\n')
+report.write('</html>\n')
