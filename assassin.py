@@ -207,12 +207,18 @@ else:
                   report.write('</pre>\n')
                   report.write('</div>\n')
 
+                if "HTTP" in str(service['data']).split('\n')[0]:
+                  if str(service['data']).split('\n')[0].split(' ')[1] == "200":
+                    report.write('<span class="datawarning">HTTP 200</span>')
+                  if str(service['data']).split('\n')[0].split(' ')[1] == "500":
+                    report.write('<span class="dataerror">HTTP 500</span>')
+
                 if service.has_key('ssl'):
                   report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
                   if service['ssl']['cert']['expired']:
-                    report.write('<span class="sslexpired">Expired</span>')
+                    report.write('<span class="sslerror">Expired</span>')
                   if service['ssl']['cert']['subject']['CN'][0] == "*":
-                    report.write('<span class="sslwildcard">Wildcard</span>')
+                    report.write('<span class="sslwarning">Wildcard</span>')
                   report.write('</div>\n')
 
                 if service.has_key('vulns'):
