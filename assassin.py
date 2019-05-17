@@ -3,46 +3,25 @@
 import ipaddress
 import urllib2
 import json
-from sys import stdout
 
-#Let's grab a domain to analyze
-domain = raw_input("What domain would you like to search? ")
-
-#These will be used in the summary report generated at the end of the script
-dnsnames = 0
-htdns = 0
-dnsdbdns = 0
-livehosts = 0
-privateips = 0
-hosting = {}
-whoisids = {}
-liveservices = 0
-vulnerabilities = 0
-severitynone = 0
-severitylow = 0
-severitymedium = 0
-severityhigh = 0
-severitycritical = 0
-sslservices = 0
-expiredcerts = 0
-wildcardcert = 0
-httplisteners = 0
-http200s = 0
-sshlisteners = 0
-ipaddresses = []
-report = ""
-
-def getDns(domain):
-  output = []
+def getDnsht(domain):
   url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain, )
   try:
     response = urllib2.urlopen(url)
-    domains = response.read().strip().split("\n")
-    for domain in domains:
-      output.append(domain.split(",")[0])
-    return output
-  except urllib2.HTTPError, e:
-    pass
+    data = response.read().strip()
+    if data == "error check your search parameter":
+      return False
+    else:
+      output = []
+      lines = data.split("\n")
+      for line in lines:
+        fields = line.split(",")
+        host = fields[0]
+        output.append(host)
+      print "Received hosts from Hacker Target"
+      return output
+  except:
+    return False
 
 def getDnsdb(domain):
   dnsdbkey = "dce-cc9d0395d2c77b3bc8fe487a5e9c65059667137b74d7e588585fac7321e9"
@@ -50,86 +29,82 @@ def getDnsdb(domain):
   headers = { "X-API-Key": dnsdbkey }
   data = ""
   url = "%s*.%s/A" % (urlbase, domain)
-  output = []
   request = urllib2.Request(url, data, headers)
-  response = urllib2.urlopen(request)
-  for result in response.read().split("\n"):
-    if (result.strip() != "" and result[0] != ";"):
-      fields = result.split(" ")
-      if (fields[2] == "A"):
-        output.append(fields[0].rstrip('.'))
-  return output
+  try:
+    output = []
+    response = urllib2.urlopen(request)
+    for result in response.read().split("\n"):
+      if (result.strip() != "" and result[0] != ";"):
+        fields = result.split(" ")
+        if (fields[2] == "A"):
+          output.append(fields[0].rstrip('.'))
+    if output == []:
+      return False
+    else:
+      print "Received hosts from DNSDB"
+      return output
+  except:
+    return False
+
+def dnsCombine(dnsht, dnsdb):
+  if dnsht and dnsdb:
+    print "Combining hosts received from Hacker Target and DNSDB"
+    for entry in dnsdb:
+      if entry not in dnsht:
+        dnsht.append(entry)
+    return dnsht
+  elif dnsht:
+    print "Using host data from Hacker Target"
+    return dnsht
+  elif dnsdb:
+    print "Using host data from DNSDB"
+    return dnsdb
+  else:
+    return False
 
 def getFwdDns(host):
   output = []
   url='https://dns.google.com/resolve?name=%s&type=A' % (host, )
   try:
+    output = []
     jsonresponse = urllib2.urlopen(url)
-    try:
-      response = json.loads(jsonresponse.read())
-      if response.has_key("Answer"):
-        answers = response["Answer"]
-        for answer in answers:
-          if answer.has_key("data"):
-            try:
-              address = ipaddress.ip_address(answer["data"])
-              output.append(answer["data"].encode("ascii"))
-            except ValueError as e:
-              secondurl='https://dns.google.com/resolve?name=%s&type=A' % (answer["data"], )
-              try:
-                secondjson = urllib2.urlopen(secondurl)
-                try:
-                  secondresponse = json.loads(jsonresponse.read())
-                  if secondresponse.has_key("Answer"):
-                    secondanswers = secondresponse["Answer"]
-                    for secondanswer in secondanswers:
-                      if secondanswer.has_key("data"):
-                        try:
-                          secondaddress = ipaddress.ip_address(secondanswer["data"])
-                          output.append(secondanswer["data"].encode("ascii"))
-                        except ValueError as e:
-                          pass
-                except:
-                  pass
-              except:
-                pass
-    except:
-      pass
+    response = json.loads(jsonresponse.read())
+    if response.has_key("Answer"):
+      answers = response["Answer"]
+      for answer in answers:
+        if answer.has_key("data"):
+          try:
+            address = ipaddress.ip_address(answer["data"])
+            output.append(answer["data"].encode("ascii"))
+          except:
+            pass
+    return output
   except:
-    pass
-  return output
+    return False
 
 def getRevDns(ip):
   reverseip = "%s.%s.%s.%s.in-addr.arpa." % (ip.split(".")[3], ip.split(".")[2], ip.split(".")[1], ip.split(".")[0])
-  output = ""
   url='https://dns.google.com/resolve?name=%s&type=PTR' % (reverseip, )
   try:
     jsonresponse = urllib2.urlopen(url)
-    try:
-      response = json.loads(jsonresponse.read())
-      if response.has_key("Answer"):
-        answers = response["Answer"]
-        for answer in answers:
-          if answer.has_key("data"):
-            output = answer["data"].encode("ascii")
-    except:
-      pass
+    response = json.loads(jsonresponse.read())
+    if response.has_key("Answer"):
+      answers = response["Answer"]
+      for answer in answers:
+        if answer.has_key("data"):
+          return answer["data"].encode("ascii")
   except:
-    pass
-  return output
+    return False
 
 def getShodan(ip):
   shodankey='C9tNjcBpKWoDmuqbbZ9lzeXKrv58iug8'
   url='https://api.shodan.io/shodan/host/%s?key=%s' % (ip, shodankey)
   try:
     jsonresponse = urllib2.urlopen(url)
-    try:
-      response = json.loads(jsonresponse.read())
-      return response  
-    except:
-      pass
+    response = json.loads(jsonresponse.read())
+    return response  
   except:
-    pass
+    return False
 
 def checkPrivate(ip):
   unicodeip = unicode(str(ip), "utf-8")
@@ -142,261 +117,122 @@ def checkPrivate(ip):
     return False
 
 def getWhois(ip):
-  output = ""
   url = "http://rdap.arin.net/registry/ip/%s" % (ip, )
   try:
     jsonresponse = urllib2.urlopen(url)
     response=json.loads(jsonresponse.read())
     if response.has_key("name"):
-      output = response["name"]
+      return response["name"]
     elif response.has_key("entities"):
-      output = response["entities"][0]["handle"]
-  except:
-    pass
-  return output
-
-def getCve(cve):
-  output = []
-  url = "http://cve.circl.lu/api/cve/%s" % (cve, )
-  try:
-    jsonresponse = urllib2.urlopen(url)
-    cvss = ""
-    severity = ""
-    summary = ""
-    try:
-      response = json.loads(jsonresponse.read())
-      if response.has_key("cvss"):
-        cvss = response["cvss"]
-        if (float(response["cvss"]) == 0):
-          severity = "None"
-          global severitynone
-          severitynone += 1
-        elif (0 < float(response["cvss"]) < 4):
-          severity = "Low"
-          global severitylow
-          severitylow += 1
-        elif (4 <= float(response["cvss"]) < 7):
-          severity = "Medium"
-          global severitymedium
-          severitymedium += 1
-        elif (7 <= float(response["cvss"]) < 9):
-          severity = "High"
-          global severityhigh
-          severityhigh += 1
-        elif (9 <= float(response["cvss"])):
-          severity = "Critical"
-          global severitycritical
-          severitycritical += 1
-        else:
-          severity = "Unknown"
-      if response.has_key("summary"):
-        summary = response["summary"]
-      return {"cvss": cvss, "severity": severity, "summary": summary}
-    except ValueError as e:
-      pass
-  except urllib2.HTTPError, e:
-    pass
-
-# Get DNS data for domain from HackerTarget
-dns = getDns(domain)
-htdns = len(dns)
-
-#get DNS data from dnsdb
-dnsdb = getDnsdb(domain)
-dnsdbdns = len(dnsdb)
-
-#add DNS entries from dnsdb into the hacker target data
-for name in dnsdb:
-  if name not in dns:
-    dns.append(name)
-
-dnsnames = len(dns)
-
-#Make sure we get a result
-if (len(dns) > 0):
-
-  #This will be used in the summary report
-  dnsnames = len(dns)
-
-  #This gives us a nice status indicator on the CLI so the operator knows the script is still running
-  dnscounter = 1  
-  for host in dns:
-    stdout.write("\r" + str(dnscounter) + " out of " + str(dnsnames) + " DNS entries analyzed")
-    stdout.flush()
-    dnscounter += 1
-    report += '<div class="host">%s</div>\n' % (host, )
-
-    #DNS resolve the hostname (This should probably be moved to a function)
-    resolve = getFwdDns(host)
-
-    #Check for IP addresses in DNS resolution
-    if (len(resolve) > 0):
-
-      #This is used in the summary report
-      livehosts += 1
-
-      for ip in resolve:
-
-        #We don't want to process the same IP address over and over - check to see if IP has already been processed
-        if (ip in ipaddresses):
-          report += '<div class="hostinfo">IP Address: %s - Already analyzed</div>\n' % (ip, )
-
-        else:
-          #Add IP address to the list of processed addresses
-          ipaddresses.append(ip)
-
-          report += '<div class="hostinfo">\n'
-          report += "IP Address: %s<br>\n" % (ip, )
-
-          #Check to see if the IP address is private
-          if (checkPrivate(ip)):
-            #The IP address is private - increment the private IP address counter for the summary
-            privateips += 1
-            report += "</div>\n"
-
-          else:
-            #Some hosting services include their identity in reverse DNS information
-            reversedns = getRevDns(ip)
-
-            if (len(reversedns) > 0):
-              report += "Reverse DNS: %s<br>\n" % (reversedns,)
-
-            #WhoIs should also give a clue about the hosting provider
-            whoisresult = getWhois(ip)
-            report += "Whois: %s<br>\n" % (whoisresult, )
-            if whoisresult in whoisids:
-              whoisids[whoisresult] += 1
-            else:
-              whoisids[whoisresult] = 1
-
-            shodan = getShodan(ip)
-            if (shodan is None):
-              report += "</div>\n"
-            elif (shodan is not None):
-              if shodan.has_key("vulns"):
-                for vuln in shodan["vulns"]:
-                  vulnerabilities += 1  
-                  cvedata = getCve(vuln)
-                  report += "<br><font face=courier size=2>Vulnerability: %s - %s - %s</font><br>\n" % (vuln, cvedata["cvss"], cvedata["severity"], )
-                  report += "<font face=courier size=1>%s</font><br>\n" % (cvedata["summary"], )
-              if shodan.has_key("org"):
-                if (shodan["org"] is not None):
-                  report += "Org: %s<br>\n" % (shodan["org"],)
-                  report += "</div>\n"
-              else:
-                report += "</div>\n"
-              if shodan.has_key("data"):
-                for service in shodan["data"]:
-                  serviceport = ""
-                  if service.has_key("transport") and service.has_key("port"):
-                    report += '<div class="serviceport">%s/%s</div>\n' % (service["transport"], service["port"])
-                  if service.has_key("data"):
-                    liveservices = liveservices + 1
-                    report += "<xmp>"
-                    data = service["data"].split("\n")                      
-                    for rawline in data:
-                      line = rawline.encode('ascii', 'ignore').decode('ascii').strip()
-                      if (len(line) > 0):
-                        if ("HTTP" in line):
-                          httplisteners = httplisteners + 1
-                        if ("HTTP/1.1 200 OK" in line):
-                          http200s = http200s + 1
-                        if ("SSH" in line):
-                          sshlisteners = sshlisteners + 1
-                        report += line + "\n"
-                    report += "</xmp>\n"  
-                  if service.has_key("ssl"):
-                    sslservices += 1
-                    report += '<div class="ssl">SSL<br>\n'
-                    if service["ssl"].has_key("cert"):
-                      if service["ssl"]["cert"].has_key("expired"):
-                        if (service["ssl"]["cert"]["expired"] == True):
-                          expiredcerts += 1
-                        report += "Expired: %s<br>\n" % (service["ssl"]["cert"]["expired"], )
-                      if service["ssl"]["cert"].has_key("issuer"):
-                        if service["ssl"]["cert"]["issuer"].has_key("O"):
-                          report += "Issuer: %s<br>\n" % (service["ssl"]["cert"]["issuer"]["O"], )
-                      if service["ssl"]["cert"].has_key("subject"):
-                        if service["ssl"]["cert"]["subject"].has_key("CN"):
-                          if("*" in service["ssl"]["cert"]["subject"]["CN"]):
-                            wildcardcert += 1
-                          report += "Common Name: %s<br>\n" % (service["ssl"]["cert"]["subject"]["CN"], )
-                    report += "</div>\n"
-            else:
-              report += "</div>\n"
+      return response["entities"][0]["handle"]
     else:
-      report += "</div>\n"
+      return False
+  except:
+    return False
 
-summary = "<font face=courier size=10>%s</font>\n" % (domain, )
-summary += '<div class="summarydata">\n'
-summary += "Hacker Target DNS Entries: %s<br>\n" % (htdns, )
-summary += "DNSDB DNS Entries: %s<br>\n" % (dnsdbdns, )
-summary += "Total De-Duplicated DNS Entries: %s<br>\n" % (dnsnames, )
-summary += "Live DNS Entries: %s<br>\n" % (livehosts, )
-summary += "</div>\n"
-summary += '<div class="summaryheader">Hostings Information</div>\n'
-summary += '<div class="summarydata">\n'
-summary += "Total IPs Analyzed: %s<br>\n" % (len(ipaddresses), )
-summary += "Private IPs: %s<br>\n" % (privateips, )
-summary += "</div>\n"
-summary += '<div class="summaryheader">Services<div>\n'
-summary += '<div class="summarydata">\n'
-summary += "Total: %s<br>\n" % (liveservices, )
-summary += "HTTP(S): %s<br>\n" % (httplisteners, )
-summary += "HTTP(S) 200s: %s<br>\n" % (http200s, )
-summary += "SSH: %s<br>\n" % (sshlisteners, )
-summary += "SSL: %s<br>\n" % (sslservices, )
-summary += "</div>"
-summary += '<div class="summaryheader">Certificates</div>\n'
-summary += '<div class="summarydata">\n'
-summary += "Wildcard Certificates: %s<br>\n" % (wildcardcert, )
-summary += "Expired Certificates: %s<br>\n" % (expiredcerts, )
-summary += "</div>"
-summary += '<div class="summaryheader">Vulnerabilities</div>\n'
-summary += '<div class="summarydata">\n'
-summary += "Total: %s<br>\n" % (vulnerabilities, )
-summary += "None: %s<br>\n" % (severitynone, )
-summary += "Low: %s<br>\n" % (severitylow, )
-summary += "Medium: %s<br>\n" % (severitymedium, )
-summary += "High: %s<br>\n" % (severityhigh, )
-summary += "Critical: %s<br>\n" % (severitycritical, )
-summary += "</div>"
+domain = raw_input("What domain would you like to search? ")
+reportfile = "%s-detail.html" % (domain.split(".")[0], )
+report = open(reportfile, "w")
+report.write('<html>\n')
+report.write('<head>\n')
+report.write('<title>Assassin Report for %s</title>\n' % (domain, ))
+#writing out some style guidelines
+report.write('<style>\n')
+style = open("style.css", "r")
+for line in style:
+  report.write(line)
+style.close()
+report.write('</style>\n')
+report.write('</head>\n')
+report.write('<body>\n')
+report.write('<div class="title">\n')
+report.write('%s\n' % (domain, ))
+report.write('</div>\n')
 
-css = "<head>\n"
-css += "<style>\n"
-css += "div.summaryheader {\n"
-css += "\tfont: 13pt courier;\n"
-css += "}\n"
-css += "div.summarydata {\n"
-css += "\tfont: 11pt courier;\n"
-css += "\tmargin-left: 25px;\n"
-css += "}\n"
-css += "div.host {\n"
-css += "\tfont: 13pt courier;\n"
-css += "}\n"
-css += "div.hostinfo {\n"
-css += "\tfont: 11pt courier;\n"
-css += "\tmargin-left: 25px;\n"
-css += "}\n"
-css += "div.serviceport {\n"
-css += "\tfont: 9pt courier;\n"
-css += "\tmargin-left: 50px;\n"
-css += "}\n"
-css += "xmp {\n"
-css += "\tfont: 7pt courier;\n"
-css +="\tmargin-left: 50px;\n"
-css += "}\n"
-css += "div.ssl {\n"
-css += "\tfont: 7pt courier;\n"
-css += "\tmargin-left: 75px;\n"
-css += "}\n"
-css += "</style>\n"
-css += "</head>\n\n"
+dnsht = getDnsht(domain)
+dnsdb = getDnsdb(domain)
+hosts = dnsCombine(dnsht, dnsdb)
 
-filename = domain.split(".")[0] + ".html"
-file = open(filename, "w")
-file.write(css)
-file.write(summary)
-file.write("<br><br>\n")
-file.write(report)
-file.close
+if not hosts:
+  print "No DNS entries discovered for target domain"
+  report.close()
+else:
+  for host in hosts:
+    print "Processing host: %s" % (host)
+    report.write('<div class="host">\n')
+    report.write('%s\n' % (host, ))
+    report.write('</div>\n')
+
+    ips = getFwdDns(host)
+    if ips:
+      for ip in ips:
+        report.write('<div class="ip">\n')
+        report.write('IP: %s<br>\n' % (ip, ))
+
+        if checkPrivate(ip):
+          report.write("Private: Yes<br>\n")
+          report.write('</div>\n')
+        else:
+
+          reverse = getRevDns(ip)
+          if reverse:
+            report.write("Reverse DNS: %s<br>\n" % (reverse, ))
+
+          whois = getWhois(ip)
+          if whois:
+            report.write("WhoIs: %s<br>\n" % (whois, ))
+
+          report.write('</div>\n')
+
+          shodan = getShodan(ip)
+          if shodan:
+            if shodan.has_key('data'):
+              for service in shodan['data']:
+                report.write('<div class="service">\n')
+                if service.has_key('transport') and service.has_key('port') and service.has_key('product'):
+                  report.write("Service: %s/%s - %s\n" % (service['transport'], service['port'], service['product']))
+                else:
+                  report.write("Service: %s/%s\n" % (service['transport'], service['port']))
+                report.write('</div>\n')
+
+                if service.has_key('data'):
+                  report.write('<div class="data">\n')
+                  report.write('<pre>')
+                  report.write(service['data'].strip())
+                  report.write('</pre>\n')
+                  report.write('</div>\n')
+
+                if service.has_key('ssl'):
+                  report.write('<div class="ssl">\n')
+                  report.write("SSL Subject: %s\n" % (service['ssl']['cert']['subject']['CN'], ))
+                  if service['ssl']['cert']['expired']:
+                    report.write('<br><font color="red">This certificate is expired!</font>')
+                  report.write('</div>\n')
+
+                if service.has_key('vulns'):
+                  report.write('<table class="vulnerability">\n')
+                  report.write("<tr>")
+                  report.write('<td align="center" width="150px">CVE</td>')
+                  report.write('<td align="center" width="150px">CVSS</td>')
+                  report.write('<td align="center">Summary</td>')
+                  report.write("</tr>\n")
+                  vulns = service['vulns']
+		  for vuln in vulns:
+                    if vulns[vuln].has_key('cvss') and vulns[vuln].has_key('summary'):
+                      report.write("<tr>")
+                      report.write('<td align="center">%s</td>' % (vuln, ))
+                      report.write('<td align="center"')
+                      cvss = vulns[vuln]['cvss']
+                      if 0.1 <= float(cvss) < 4:
+                        report.write(' bgcolor="yellow"')
+                      elif 4 <= float(cvss) < 7:
+                        report.write(' bgcolor="orange"')
+                      elif 7 <= float(cvss) < 9:
+                        report.write(' bgcolor="red"')
+                      elif 9 <= float(cvss):
+                        report.write(' bgcolor="purple"')
+                      report.write('>%s</td>' % (cvss, ))
+                      report.write("<td>%s</td>" % (vulns[vuln]['summary'], ))
+                      report.write("</tr>\n")
+                  report.write("</table>")
+                  report.write('</div>\n')
