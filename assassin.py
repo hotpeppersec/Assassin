@@ -187,6 +187,7 @@ else:
           shodan = getShodan(ip)
           if shodan:
             if shodan.has_key('data'):
+
               for service in shodan['data']:
                 report.write('<div class="service">\n')
                 if service.has_key('transport') and service.has_key('port') and service.has_key('product'):
@@ -194,6 +195,10 @@ else:
                 else:
                   report.write("Service: %s/%s\n" % (service['transport'], service['port']))
                 report.write('</div>\n')
+
+                if service.has_key('tags'):
+                  for tag in service['tags']:
+                    report.write('<span class="tag">%s</span>' % (tag, ))
 
                 if service.has_key('data'):
                   report.write('<div class="data">\n')
@@ -203,10 +208,11 @@ else:
                   report.write('</div>\n')
 
                 if service.has_key('ssl'):
-                  report.write('<div class="ssl">\n')
-                  report.write("SSL Subject: %s\n" % (service['ssl']['cert']['subject']['CN'], ))
+                  report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
                   if service['ssl']['cert']['expired']:
-                    report.write('<br><font color="red">This certificate is expired!</font>')
+                    report.write('<span class="sslexpired">Expired</span>')
+                  if service['ssl']['cert']['subject']['CN'][0] == "*":
+                    report.write('<span class="sslwildcard">Wildcard</span>')
                   report.write('</div>\n')
 
                 if service.has_key('vulns'):

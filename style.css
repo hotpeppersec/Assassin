@@ -34,6 +34,17 @@
     font:normal 16px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
+.tag {
+    position: relative;
+    left: 60px;
+    top-margin: 5px;
+    padding: 2px;
+    border: 1px solid orange;
+    border-radius: 7px;
+    background-color: orange;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
 .data pre {
     position: relative;
     left: 80px;
@@ -44,8 +55,31 @@
 
 .ssl {
     position: relative;
+    padding: 5px;
     left: 80px;
     font:normal 14px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
+.sslexpired {
+    position: relative;
+    left: 80px;
+    top-margin: 5px;
+    padding: 2px;
+    border: 1px solid red;
+    border-radius: 7px;
+    background-color: red;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
+.sslwildcard {
+    position: relative;
+    left: 80px;
+    top-margin: 5px;
+    padding: 2px;
+    border: 1px solid orange;
+    border-radius: 7px;
+    background-color: orange;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
 table.vulnerability {
