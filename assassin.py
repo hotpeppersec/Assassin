@@ -4,6 +4,8 @@ import ipaddress
 import urllib2
 import json
 
+summary = { "hosts": 0, "ips": 0, "privateips": 0, "unspecifiedips": 0, "reservedips": 0, "services": 0, "cloudservices": 0 } 
+
 def getDnsht(domain):
   url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain, )
   try:
@@ -116,6 +118,26 @@ def checkPrivate(ip):
   else:
     return False
 
+def checkUnspecified(ip):
+  unicodeip = unicode(str(ip), "utf-8")
+  if (ipaddress.ip_address(unicodeip)):
+    if (ipaddress.ip_address(unicodeip).is_unspecified):
+      return True
+    else:
+      return False
+  else:
+    return False
+
+def checkReserved(ip):
+  unicodeip = unicode(str(ip), "utf-8")
+  if (ipaddress.ip_address(unicodeip)):
+    if (ipaddress.ip_address(unicodeip).is_reserved):
+      return True
+    else:
+      return False
+  else:
+    return False
+
 def getWhois(ip):
   url = "http://rdap.arin.net/registry/ip/%s" % (ip, )
   try:
@@ -153,6 +175,8 @@ dnsht = getDnsht(domain)
 dnsdb = getDnsdb(domain)
 hosts = dnsCombine(dnsht, dnsdb)
 
+summary['hosts'] = len(hosts)
+
 if not hosts:
   print "No DNS entries discovered for target domain"
   report.close()
@@ -163,15 +187,26 @@ else:
     report.write('%s\n' % (host, ))
     report.write('</div>\n')
 
+    #hostname/domain/URL tags will go here in the future
+
     ips = getFwdDns(host)
     if ips:
       for ip in ips:
+        summary['ips'] += 1
         report.write('<div class="ip">\n')
         report.write('IP: %s<br>\n' % (ip, ))
 
-        if checkPrivate(ip):
-          report.write("Private: Yes<br>\n")
+        if checkPrivate(ip) or checkReserved(ip) or checkUnspecified(ip):
           report.write('</div>\n')
+          if checkPrivate(ip):
+            summary['privateips'] += 1
+            report.write('<span class="iperror">Private</span>')
+          if checkReserved(ip):
+            summary['reservedips'] += 1
+            report.write('<span class="iperror">Reserved</span>')
+          if checkUnspecified(ip):
+            summary['unspecifiedips'] += 1
+            report.write('<span class="iperror">Unspecified</span>')
         else:
 
           reverse = getRevDns(ip)
@@ -184,11 +219,21 @@ else:
 
           report.write('</div>\n')
 
+          #if someCheck(ip):
+            #report.write('<span class="iperror">BadTag</span>')
+
+          #Add more IP checks here...
+
           shodan = getShodan(ip)
           if shodan:
+
+#            if shodan.has_key('latitude') and shodan.has_key('longitude'):
+              
+
             if shodan.has_key('data'):
 
               for service in shodan['data']:
+                summary['services'] += 1
                 report.write('<div class="service">\n')
                 if service.has_key('transport') and service.has_key('port') and service.has_key('product'):
                   report.write("Service: %s/%s - %s\n" % (service['transport'], service['port'], service['product']))
@@ -198,6 +243,8 @@ else:
 
                 if service.has_key('tags'):
                   for tag in service['tags']:
+                    if tag == "cloud":
+                      summary['cloudservices'] += 1
                     report.write('<span class="tag">%s</span>' % (tag, ))
 
                 if service.has_key('data'):
@@ -272,3 +319,5 @@ else:
  
 report.write('</body>\n')
 report.write('</html>\n')
+
+print summary

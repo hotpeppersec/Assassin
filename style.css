@@ -26,10 +26,30 @@
     font:normal 20px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
+.ipwarn {
+    position: relative;
+    left: 40px;
+    padding: 3px;
+    border: 1px solid ornage;
+    border-radius: 7px;
+    background-color: orange;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
+.iperror {
+    position: relative;
+    left: 40px;
+    padding: 5px;
+    border: 1px solid red;
+    border-radius: 7px;
+    background-color: red;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
 .service {
     position: relative;
     left: 60px;
-    padding: 5px;
+    padding: 3px;
     width: 100%;
     font:normal 16px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
@@ -37,8 +57,7 @@
 .tag {
     position: relative;
     left: 60px;
-    top-margin: 5px;
-    padding: 2px;
+    padding: 3px;
     border: 1px solid orange;
     border-radius: 7px;
     background-color: orange;
@@ -56,8 +75,7 @@
 .datawarning {
     position: relative;
     left: 80px;
-    top-margin: 5px;
-    padding: 2px;
+    padding: 3px;
     border: 1px solid orange;
     border-radius: 7px;
     background-color: orange;
@@ -67,8 +85,7 @@
 .dataerror {
     position: relative;
     left: 80px;
-    top-margin: 5px;
-    padding: 2px;
+    padding: 3px;
     border: 1px solid red;
     border-radius: 7px;
     background-color: red;
@@ -85,8 +102,7 @@
 .sslerror {
     position: relative;
     left: 80px;
-    top-margin: 5px;
-    padding: 2px;
+    padding: 3px;
     border: 1px solid red;
     border-radius: 7px;
     background-color: red;
@@ -96,8 +112,7 @@
 .sslwarning {
     position: relative;
     left: 80px;
-    top-margin: 5px;
-    padding: 2px;
+    padding: 3px;
     border: 1px solid orange;
     border-radius: 7px;
     background-color: orange;
