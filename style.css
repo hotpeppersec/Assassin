@@ -53,7 +53,7 @@
     font:normal 16px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
-.tag {
+.servicewarning {
     position: relative;
     left: 60px;
     padding: 3px;
@@ -61,6 +61,16 @@
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
     color: orange;
+}
+
+.serviceerror {
+    position: relative;
+    left: 60px;
+    padding: 3px;
+    border: 2px solid red;
+    border-radius: 7px;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: red;
 }
 
 .data pre {
