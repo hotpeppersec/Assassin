@@ -4,7 +4,7 @@ import ipaddress
 import urllib2
 import json
 
-summary = { "hosts": 0, "ips": 0, "privateips": 0, "unspecifiedips": 0, "reservedips": 0, "services": 0, "cloudservices": 0 } 
+summary = { "hosts": 0, "ips": 0, "privateips": 0, "unspecifiedips": 0, "reservedips": 0, "services": 0, "cloudservices": 0 , "starttlsservices": 0, "selfsignedservices": 0, "http200": 0, "http5xx": 0, "sslexpired": 0, "sslwildcard": 0, "sslbadversion": 0, "sslbadcipher": 0, "vulntotal": 0, "vulnlow": 0, "vulnmedium": 0, "vulnhigh": 0, "vulncritical": 0 } 
 
 def getDnsht(domain):
   url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain, )
@@ -20,7 +20,7 @@ def getDnsht(domain):
         fields = line.split(",")
         host = fields[0]
         output.append(host)
-      print "Received hosts from Hacker Target"
+      print "Received %s hosts from Hacker Target" % (len(lines), )
       return output
   except:
     return False
@@ -43,24 +43,42 @@ def getDnsdb(domain):
     if output == []:
       return False
     else:
-      print "Received hosts from DNSDB"
+      print "Received %s hosts from DNSDB" % (len(output), )
       return output
   except:
     return False
 
-def dnsCombine(dnsht, dnsdb):
-  if dnsht and dnsdb:
-    print "Combining hosts received from Hacker Target and DNSDB"
+def getVtdomain(domain):
+  vtkey='7b047d96daebcbe4fc683016b07c4b82580603bbfab4a7a2fc055f1b6d5a0318'
+  url='https://www.virustotal.com/vtapi/v2/domain/report?domain=%s&apikey=%s' % (domain, vtkey)
+  try:
+    jsonresponse = urllib2.urlopen(url)
+    response = json.loads(jsonresponse.read())
+    print "Received %s hosts from VirusTotal" % (len(response['subdomains']), )
+    return response['subdomains']
+  except:
+    return False
+
+def dnsCombine(dnsht, dnsdb, dnsvt):
+  print "Combining and de-duplicating hosts"
+  output = []
+  if dnsht:
+    for entry in dnsht:
+      if entry not in output:
+        output.append(entry)
+  if dnsdb:
     for entry in dnsdb:
-      if entry not in dnsht:
-        dnsht.append(entry)
-    return dnsht
-  elif dnsht:
-    print "Using host data from Hacker Target"
-    return dnsht
-  elif dnsdb:
-    print "Using host data from DNSDB"
-    return dnsdb
+      if entry not in output:
+        output.append(entry)
+  if dnsvt:
+    for entry in dnsvt:
+      if entry not in output:
+        output.append(entry)
+
+  print "Combined to a total of %s hosts" % len(output)
+
+  if len(output) > 0:
+    return(output)
   else:
     return False
 
@@ -173,7 +191,8 @@ report.write('</div>\n')
 
 dnsht = getDnsht(domain)
 dnsdb = getDnsdb(domain)
-hosts = dnsCombine(dnsht, dnsdb)
+dnsvt = getVtdomain(domain)
+hosts = dnsCombine(dnsht, dnsdb, dnsvt)
 
 summary['hosts'] = len(hosts)
 
@@ -245,7 +264,13 @@ else:
                   for tag in service['tags']:
                     if tag == "cloud":
                       summary['cloudservices'] += 1
-                    report.write('<span class="tag">%s</span>' % (tag, ))
+                      report.write('<span class="servicewarning">%s</span>' % (tag, ))
+                    if tag == "starttls":
+                      summary['starttlsservices'] += 1
+                      report.write('<span class="servicewarning">%s</span>' % (tag, ))
+                    if tag == "self-signed":
+                      summary['selfsignedservices'] += 1
+                      report.write('<span class="serviceerror">%s</span>' % (tag, ))
 
                 if service.has_key('data'):
                   report.write('<div class="data">\n')
@@ -258,43 +283,59 @@ else:
                   httpstatus = str(service['data']).split('\n')[0].split(' ')[1]
                   if httpstatus == "200":
                     report.write('<span class="datawarning">Valid Response with IP Scan</span>')
+                    summary['http200'] += 1
                   if httpstatus == "500":
                     report.write('<span class="dataerror">Internal Server Error</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "501":
                     report.write('<span class="dataerror">Not Implemented</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "502":
                     report.write('<span class="dataerror">Bad Gateway</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "503":
                     report.write('<span class="dataerror">Service Unavailable</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "504":
                     report.write('<span class="dataerror">Gateway Timeout</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "505":
                     report.write('<span class="dataerror">HTTP Version Not Supported</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "506":
                     report.write('<span class="dataerror">Variant Also Negotiates</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "507":
                     report.write('<span class="dataerror">Insufficient Storage</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "508":
                     report.write('<span class="dataerror">Loop Detected</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "510":
                     report.write('<span class="dataerror">Not Extended</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "511":
                     report.write('<span class="dataerror">Network Authentication Required</span>')
+                    summary['http5xx'] += 1
                   if httpstatus == "599":
                     report.write('<span class="dataerror">Network Connection Timeout Error</span>')
+                    summary['http5xx'] += 1
 
                 if service.has_key('ssl'):
                   report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
                   if service['ssl']['cert']['expired']:
                     report.write('<span class="sslerror">Expired</span>')
+                    summary['sslexpired'] += 1
                   if service['ssl']['cert']['subject']['CN'][0] == "*":
                     report.write('<span class="sslwarning">Wildcard</span>')
+                    summary['sslwildcard'] += 1
 
                   if service['ssl'].has_key('versions'):
                     badversions = ['TLSv1', 'SSLv2', 'SSLv3', 'TLSv1.1']
                     for version in service['ssl']['versions']:
                       if version in badversions:
                         report.write('<span class="sslerror">%s</span>' % (version, ))
+                        summary['sslbadversion'] += 1
 
                   if service['ssl'].has_key('cipher'):
                     goodciphers = []
@@ -313,6 +354,7 @@ else:
                       cipher = service['ssl']['cipher']['name']
                       if cipher not in goodciphers:
                         report.write('<span class="sslerror">%s</span>' % (cipher, ))
+                        summary['sslbadcipher'] += 1
 
                 if service.has_key('vulns'):
                   report.write('<table class="vulnerability">\n')
@@ -323,6 +365,7 @@ else:
                   report.write("</tr>\n")
                   vulns = service['vulns']
 		  for vuln in vulns:
+                    summary['vulntotal'] += 1
                     if vulns[vuln].has_key('cvss') and vulns[vuln].has_key('summary'):
                       report.write("<tr>")
                       report.write('<td align="center">%s</td>' % (vuln, ))
@@ -330,12 +373,16 @@ else:
                       cvss = vulns[vuln]['cvss']
                       if 0.1 <= float(cvss) < 4:
                         report.write(' bgcolor="yellow"')
+                        summary['vulnlow'] += 1
                       elif 4 <= float(cvss) < 7:
                         report.write(' bgcolor="orange"')
+                        summary['vulnmedium'] += 1
                       elif 7 <= float(cvss) < 9:
                         report.write(' bgcolor="red"')
+                        summary['vulnhigh'] += 1
                       elif 9 <= float(cvss):
                         report.write(' bgcolor="purple"')
+                        summary['vulncritical'] += 1
                       report.write('>%s</td>' % (cvss, ))
                       report.write("<td>%s</td>" % (vulns[vuln]['summary'], ))
                       report.write("</tr>\n")
