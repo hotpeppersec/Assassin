@@ -290,6 +290,30 @@ else:
                   if service['ssl']['cert']['subject']['CN'][0] == "*":
                     report.write('<span class="sslwarning">Wildcard</span>')
 
+                  if service['ssl'].has_key('versions'):
+                    badversions = ['TLSv1', 'SSLv2', 'SSLv3', 'TLSv1.1']
+                    for version in service['ssl']['versions']:
+                      if version in badversions:
+                        report.write('<span class="sslerror">%s</span>' % (version, ))
+
+                  if service['ssl'].has_key('cipher'):
+                    goodciphers = []
+                    goodciphers.append('ECDHE-ECDSA-AES256-GCM-SHA384')
+                    goodciphers.append('ECDHE-RSA-AES256-GCM-SHA384')
+                    goodciphers.append('ECDHE-ECDSA-CHACHA20-POLY1305')
+                    goodciphers.append('ECDHE-RSA-CHACHA20-POLY1305')
+                    goodciphers.append('ECDHE-ECDSA-AES128-GCM-SHA256')
+                    goodciphers.append('ECDHE-RSA-AES128-GCM-SHA256')
+                    goodciphers.append('ECDHE-ECDSA-AES256-SHA384')
+                    goodciphers.append('ECDHE-RSA-AES256-SHA384')
+                    goodciphers.append('ECDHE-ECDSA-AES128-SHA256')
+                    goodciphers.append('ECDHE-RSA-AES128-SHA256')
+
+                    if service['ssl']['cipher'].has_key('name'):
+                      cipher = service['ssl']['cipher']['name']
+                      if cipher not in goodciphers:
+                        report.write('<span class="sslerror">%s</span>' % (cipher, ))
+
                 if service.has_key('vulns'):
                   report.write('<table class="vulnerability">\n')
                   report.write("<tr>")

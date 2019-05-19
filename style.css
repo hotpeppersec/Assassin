@@ -30,19 +30,18 @@
     position: relative;
     left: 40px;
     padding: 3px;
-    border: 1px solid ornage;
+    border: 2px solid ornage;
     border-radius: 7px;
-    background-color: orange;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: orange;
 }
 
 .iperror {
     position: relative;
     left: 40px;
     padding: 5px;
-    border: 1px solid red;
+    border: 2px solid red;
     border-radius: 7px;
-    background-color: red;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
@@ -58,10 +57,10 @@
     position: relative;
     left: 60px;
     padding: 3px;
-    border: 1px solid orange;
+    border: 2px solid orange;
     border-radius: 7px;
-    background-color: orange;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: orange;
 }
 
 .data pre {
@@ -76,20 +75,20 @@
     position: relative;
     left: 80px;
     padding: 3px;
-    border: 1px solid orange;
+    border: 2px solid orange;
     border-radius: 7px;
-    background-color: orange;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: orange;
 }
 
 .dataerror {
     position: relative;
     left: 80px;
     padding: 3px;
-    border: 1px solid red;
+    border: 2px solid red;
     border-radius: 7px;
-    background-color: red;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: red;
 }
 
 .ssl {
@@ -103,20 +102,20 @@
     position: relative;
     left: 80px;
     padding: 3px;
-    border: 1px solid red;
+    border: 2px solid red;
     border-radius: 7px;
-    background-color: red;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: red;
 }
 
 .sslwarning {
     position: relative;
     left: 80px;
     padding: 3px;
-    border: 1px solid orange;
+    border: 2px solid orange;
     border-radius: 7px;
-    background-color: orange;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: orange;
 }
 
 table.vulnerability {
