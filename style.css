@@ -53,6 +53,16 @@
     font:normal 16px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
+.serviceinfo {
+    position: relative;
+    left: 60px;
+    padding: 3px;
+    border: 2px solid gray;
+    border-radius: 7px;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: gray;
+}
+
 .servicewarning {
     position: relative;
     left: 60px;
@@ -81,6 +91,16 @@
     font:normal 12px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
+.datainfo {
+    position: relative;
+    left: 80px;
+    padding: 3px;
+    border: 2px solid gray;
+    border-radius: 7px;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: gray;
+}
+
 .datawarning {
     position: relative;
     left: 80px;
@@ -99,6 +119,16 @@
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
     color: red;
+}
+
+.datacritical {
+    position: relative;
+    left: 80px;
+    padding: 3px;
+    border: 2px solid purple;
+    border-radius: 7px;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: purple;
 }
 
 .ssl {

@@ -4,7 +4,36 @@ import ipaddress
 import urllib2
 import json
 
-summary = { "hosts": 0, "ips": 0, "privateips": 0, "unspecifiedips": 0, "reservedips": 0, "services": 0, "cloudservices": 0 , "starttlsservices": 0, "selfsignedservices": 0, "http200": 0, "http5xx": 0, "sslexpired": 0, "sslwildcard": 0, "sslbadversion": 0, "sslbadcipher": 0, "vulntotal": 0, "vulnlow": 0, "vulnmedium": 0, "vulnhigh": 0, "vulncritical": 0 } 
+summary = { 
+  "hosts": 0,
+  "ips": 0,
+  "privateips": 0,
+  "unspecifiedips": 0,
+  "reservedips": 0,
+  "services": 0,
+  "cloudservices": 0 ,
+  "starttlsservices": 0,
+  "selfsignedservices": 0,
+  "http200": 0,
+  "http3xx": 0,
+  "redirectsameip": 0,
+  "redirectsamehost": 0,
+  "redirectdifferentiphost": 0,
+  "redirectdifferentdomain": 0,
+  "http5xx": 0,
+  "sslexpired": 0,
+  "sslwildcard": 0,
+  "sslnotdomain": 0,
+  "sslbadversion": 0,
+  "sslbadcipher": 0,
+  "vulntotal": 0,
+  "vulnlow": 0,
+  "vulnmedium": 0,
+  "vulnhigh": 0,
+  "vulncritical": 0,
+  "waf": 0,
+  "mapdata": []
+}
 
 def getDnsht(domain):
   url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain, )
@@ -246,7 +275,9 @@ else:
           shodan = getShodan(ip)
           if shodan:
 
-#            if shodan.has_key('latitude') and shodan.has_key('longitude'):
+            if shodan.has_key('latitude') and shodan.has_key('longitude'):
+              if {"latitude": shodan['latitude'], "longitude": shodan['longitude'] } not in summary['mapdata']:
+                summary['mapdata'].append({"latitude": shodan['latitude'], "longitude": shodan['longitude'] })
               
 
             if shodan.has_key('data'):
@@ -264,7 +295,7 @@ else:
                   for tag in service['tags']:
                     if tag == "cloud":
                       summary['cloudservices'] += 1
-                      report.write('<span class="servicewarning">%s</span>' % (tag, ))
+                      report.write('<span class="serviceinfo">%s</span>' % (tag, ))
                     if tag == "starttls":
                       summary['starttlsservices'] += 1
                       report.write('<span class="servicewarning">%s</span>' % (tag, ))
@@ -279,47 +310,34 @@ else:
                   report.write('</pre>\n')
                   report.write('</div>\n')
 
-                if "HTTP" in str(service['data']).split('\n')[0]:
-                  httpstatus = str(service['data']).split('\n')[0].split(' ')[1]
-                  if httpstatus == "200":
-                    report.write('<span class="datawarning">Valid Response with IP Scan</span>')
-                    summary['http200'] += 1
-                  if httpstatus == "500":
-                    report.write('<span class="dataerror">Internal Server Error</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "501":
-                    report.write('<span class="dataerror">Not Implemented</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "502":
-                    report.write('<span class="dataerror">Bad Gateway</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "503":
-                    report.write('<span class="dataerror">Service Unavailable</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "504":
-                    report.write('<span class="dataerror">Gateway Timeout</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "505":
-                    report.write('<span class="dataerror">HTTP Version Not Supported</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "506":
-                    report.write('<span class="dataerror">Variant Also Negotiates</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "507":
-                    report.write('<span class="dataerror">Insufficient Storage</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "508":
-                    report.write('<span class="dataerror">Loop Detected</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "510":
-                    report.write('<span class="dataerror">Not Extended</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "511":
-                    report.write('<span class="dataerror">Network Authentication Required</span>')
-                    summary['http5xx'] += 1
-                  if httpstatus == "599":
-                    report.write('<span class="dataerror">Network Connection Timeout Error</span>')
-                    summary['http5xx'] += 1
+                  if "Server: cloudflare" in service['data']:
+                    report.write('<span class="datainfo">WAF</span>')
+                    summary['waf'] += 1
+
+                  if "HTTP" in str(service['data']).split('\n')[0]:
+                    httpstatus = str(service['data']).split('\n')[0].split(' ')[1]
+                    if httpstatus == "200":
+                      report.write('<span class="datawarning">Valid Response with IP Scan</span>')
+                      summary['http200'] += 1
+                    if httpstatus[0] == "3":
+                      summary['http3xx'] += 1
+                      for line in service['data'].split("\n"):
+                        if "Location:" in line:
+                          if ip in line:
+                            report.write('<span class="datawarning">Redirect to same IP</span>')
+                            summary['redirectsameip'] += 1
+                          elif host in line:
+                            report.write('<span class="datainfo">Redirect to same host</span>')
+                            summary['redirectsamehost'] += 1
+                          else:
+                            report.write('<span class="datawarning">Redirect to different IP/host</span>')
+                            summary['redirectdifferentiphost'] += 1
+                            if domain not in line:
+                              report.write('<span class="dataerror">Redirect to different domain</span>')
+                              summary['redirectdifferentdomain'] += 1
+                    if httpstatus[0] == "5":
+                      report.write('<span class="datacritical">Server Error</span>')
+                      summary['http5xx'] += 1
 
                 if service.has_key('ssl'):
                   report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
@@ -329,6 +347,9 @@ else:
                   if service['ssl']['cert']['subject']['CN'][0] == "*":
                     report.write('<span class="sslwarning">Wildcard</span>')
                     summary['sslwildcard'] += 1
+                  if domain not in service['ssl']['cert']['subject']['CN']:
+                    report.write('<span class="sslerror">Not in domain</span>')
+                    summary['sslnotdomain'] += 1
 
                   if service['ssl'].has_key('versions'):
                     badversions = ['TLSv1', 'SSLv2', 'SSLv3', 'TLSv1.1']
@@ -390,5 +411,46 @@ else:
  
 report.write('</body>\n')
 report.write('</html>\n')
+report.close()
 
+sumfile = "%s-summary.html" % (domain.split(".")[0], )
+sum = open(sumfile, "w")
+sum.write("""<html>
+  <head>
+    <style>
+      #map {
+        height: 400px;
+        width: 800px;
+        align: center;
+       }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+function initMap() {
+  var center = {lat: 10, lng: 0};
+""")
+
+
+entrycounter = 1
+for entry in summary['mapdata']:
+  sum.write("  var point%s = {lat: %s, lng: %s};\n" % (str(entrycounter), entry['latitude'], entry['longitude']))
+  entrycounter += 1
+sum.write("  var map = new google.maps.Map(document.getElementById('map'), {zoom: 1.75, center: center});\n")
+
+entrycounter = 1
+for entry in summary['mapdata']:
+  sum.write("  var marker%s = new google.maps.Marker({position: point%s, map: map});\n" % (entrycounter, entrycounter))
+  entrycounter += 1
+
+sum.write("""}
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDCRRZ3p8yhxJP1-9IscmsxB78zAAL64AU&callback=initMap">
+    </script>
+  </body>
+""")
+
+sum.close()
 print summary
