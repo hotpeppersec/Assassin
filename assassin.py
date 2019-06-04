@@ -8,7 +8,6 @@ summary = {
   "hosts": 0,
   "ips": 0,
   "privateips": 0,
-  "unspecifiedips": 0,
   "reservedips": 0,
   "services": 0,
   "cloudservices": 0 ,
@@ -165,16 +164,6 @@ def checkPrivate(ip):
   else:
     return False
 
-def checkUnspecified(ip):
-  unicodeip = unicode(str(ip), "utf-8")
-  if (ipaddress.ip_address(unicodeip)):
-    if (ipaddress.ip_address(unicodeip).is_unspecified):
-      return True
-    else:
-      return False
-  else:
-    return False
-
 def checkReserved(ip):
   unicodeip = unicode(str(ip), "utf-8")
   if (ipaddress.ip_address(unicodeip)):
@@ -223,12 +212,11 @@ dnsdb = getDnsdb(domain)
 dnsvt = getVtdomain(domain)
 hosts = dnsCombine(dnsht, dnsdb, dnsvt)
 
-summary['hosts'] = len(hosts)
-
 if not hosts:
   print "No DNS entries discovered for target domain"
   report.close()
 else:
+  summary['hosts'] = len(hosts)
   for host in hosts:
     print "Processing host: %s" % (host)
     report.write('<div class="host">\n')
@@ -244,7 +232,7 @@ else:
         report.write('<div class="ip">\n')
         report.write('IP: %s<br>\n' % (ip, ))
 
-        if checkPrivate(ip) or checkReserved(ip) or checkUnspecified(ip):
+        if checkPrivate(ip) or checkReserved(ip):
           report.write('</div>\n')
           if checkPrivate(ip):
             summary['privateips'] += 1
@@ -252,9 +240,6 @@ else:
           if checkReserved(ip):
             summary['reservedips'] += 1
             report.write('<span class="iperror">Reserved</span>')
-          if checkUnspecified(ip):
-            summary['unspecifiedips'] += 1
-            report.write('<span class="iperror">Unspecified</span>')
         else:
 
           reverse = getRevDns(ip)
@@ -310,7 +295,7 @@ else:
                   report.write('</pre>\n')
                   report.write('</div>\n')
 
-                  if "Server: cloudflare" in service['data']:
+                  if "Server: cloudflare" in service['data'] or "CloudFront" in service['data'] or "cloudfront" in service['data']:
                     report.write('<span class="datainfo">WAF</span>')
                     summary['waf'] += 1
 
@@ -426,6 +411,7 @@ sum.write("""<html>
     </style>
   </head>
   <body>
+    Global Technology Distribution<br>
     <div id="map"></div>
     <script>
 function initMap() {
@@ -449,8 +435,45 @@ sum.write("""}
     <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDCRRZ3p8yhxJP1-9IscmsxB78zAAL64AU&callback=initMap">
     </script>
-  </body>
 """)
 
+sum.write("<br>\n")
+sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
+
+sum.write("<br>IPs<br>\n")
+sum.write("Total: %s<br>\n" % (summary['ips'], ))
+sum.write("Private: %s<br>\n" % (summary['privateips'], ))
+sum.write("Reserved: %s<br>\n" % (summary['reservedips'], ))
+
+sum.write("<br>Services<br>\n")
+sum.write("Total: %s<br>\n" % (summary['services'], ))
+sum.write("Cloud: %s<br>\n" % (summary['cloudservices'], ))
+
+sum.write("<br>HTTP<br>\n")
+sum.write("WAF: %s<br>\n" % (summary['waf'], ))
+sum.write("Valid responses with IP scan: %s<br>\n" % (summary['http200'], ))
+sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
+sum.write("Redirects to the same host: %s<br>\n" % (summary['redirectsamehost'], ))
+sum.write("Redirects to the same IP: %s<br>\n" % (summary['redirectsameip'], ))
+sum.write("Redirects to a different IP and Host: %s<br>\n" % (summary['redirectdifferentiphost'], ))
+sum.write("Redirects to a different domain: %s<br>\n" % (summary['redirectdifferentdomain'], ))
+sum.write("Application/Server Errors: %s<br>\n" % (summary['http5xx'], ))
+
+sum.write("<br>SSL<br>\n")
+sum.write("Wildcard Certificates: %s<br>\n" % (summary['sslwildcard'], ))
+sum.write("Start TLS Services: %s<br>\n" % (summary['starttlsservices'], ))
+sum.write("Self-Signed Certificates: %s<br>\n" % (summary['selfsignedservices'], ))
+sum.write("Bad Versions: %s<br>\n" % (summary['sslbadversion'], ))
+sum.write("Bad Ciphers: %s<br>\n" % (summary['sslbadcipher'], ))
+sum.write("Expired Certificates: %s<br>\n" % (summary['sslexpired'], ))
+sum.write("Certificate Subjects not in Domain: %s<br>\n" % (summary['sslnotdomain'], ))
+
+sum.write("<br>Vulnerabilities<br>\n")
+sum.write("Total: %s<br>\n" % (summary['vulntotal'], ))
+sum.write("Low: %s<br>\n" % (summary['vulnlow'], ))
+sum.write("Medium: %s<br>\n" % (summary['vulnmedium'], ))
+sum.write("High: %s<br>\n" % (summary['vulnhigh'], ))
+sum.write("Critical: %s<br>\n" % (summary['vulncritical'], ))
+
+sum.write("</body></html>")
 sum.close()
-print summary

@@ -39,10 +39,11 @@
 .iperror {
     position: relative;
     left: 40px;
-    padding: 5px;
+    padding: 3px;
     border: 2px solid red;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: red;
 }
 
 .service {
