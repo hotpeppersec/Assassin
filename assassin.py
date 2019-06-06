@@ -301,7 +301,8 @@ else:
                     "CloudFront" in service['data'] or
                     "cloudfront" in service['data'] or
                     "BigIP" in service['data'] or
-                    "bigip" in service['data']):
+                    "bigip" in service['data'] or
+                    "BIGip" in service['data']):
                     report.write('<span class="datainfo">WAF</span>')
                     summary['waf'] += 1
 
