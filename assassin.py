@@ -23,7 +23,8 @@ summary = {
   "sslexpired": 0,
   "sslwildcard": 0,
   "sslnotdomain": 0,
-  "sslbadversion": 0,
+  "sslerrorversion": 0,
+  "sslwarnversion": 0,
   "sslbadcipher": 0,
   "vulntotal": 0,
   "vulnlow": 0,
@@ -31,7 +32,8 @@ summary = {
   "vulnhigh": 0,
   "vulncritical": 0,
   "waf": 0,
-  "mapdata": []
+  "mapdata": [],
+  "pivottargets": []
 }
 
 def getDnsht(domain):
@@ -295,7 +297,11 @@ else:
                   report.write('</pre>\n')
                   report.write('</div>\n')
 
-                  if "Server: cloudflare" in service['data'] or "CloudFront" in service['data'] or "cloudfront" in service['data']:
+                  if ("Server: cloudflare" in service['data'] or
+                    "CloudFront" in service['data'] or
+                    "cloudfront" in service['data'] or
+                    "BigIP" in service['data'] or
+                    "bigip" in service['data']):
                     report.write('<span class="datainfo">WAF</span>')
                     summary['waf'] += 1
 
@@ -317,7 +323,10 @@ else:
                           else:
                             if domain not in line.split('?')[0]:
                               report.write('<span class="dataerror">Redirect to different domain</span>')
+                              pivottarget = line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip('/')
                               summary['redirectdifferentdomain'] += 1
+                              if pivottarget not in summary['pivottargets']:
+                                summary['pivottargets'].append(pivottarget)
                             else:
                               report.write('<span class="datawarning">Redirect to different IP/host</span>')
                               summary['redirectdifferentiphost'] += 1
@@ -333,6 +342,9 @@ else:
                         if domain not in service['ssl']['cert']['subject']['CN']:
                           report.write('<span class="sslerror">Not in domain</span>')
                           summary['sslnotdomain'] += 1
+                          pivottarget = service['ssl']['cert']['subject']['CN'].lstrip('*.')
+                          if pivottarget not in summary['pivottargets']:
+                            summary['pivottargets'].append(pivottarget)
                         if service['ssl']['cert']['subject']['CN'][0] == "*":
                           report.write('<span class="sslwarning">Wildcard</span>')
                           summary['sslwildcard'] += 1
@@ -342,12 +354,15 @@ else:
                         summary['sslexpired'] += 1
 
                   if service['ssl'].has_key('versions'):
-                    badversions = ['TLSv1', 'SSLv2', 'SSLv3', 'TLSv1.1']
+                    errorversions = ['TLSv1', 'SSLv2', 'SSLv3']
+                    warnversions = ['TLSv1.1']
                     for version in service['ssl']['versions']:
-                      if version in badversions:
+                      if version in errorversions:
                         report.write('<span class="sslerror">%s</span>' % (version, ))
-                        summary['sslbadversion'] += 1
-
+                        summary['sslerrorversion'] += 1
+                      elif version in warnversions:
+                        report.write('<span class="sslwarning">%s</span>' % (version, ))
+                        summary['sslwarnversion'] += 1
                   if service['ssl'].has_key('cipher'):
                     goodciphers = []
                     goodciphers.append('ECDHE-ECDSA-AES256-GCM-SHA384')
@@ -468,7 +483,8 @@ sum.write("<br>SSL<br>\n")
 sum.write("Wildcard Certificates: %s<br>\n" % (summary['sslwildcard'], ))
 sum.write("Start TLS Services: %s<br>\n" % (summary['starttlsservices'], ))
 sum.write("Self-Signed Certificates: %s<br>\n" % (summary['selfsignedservices'], ))
-sum.write("Bad Versions: %s<br>\n" % (summary['sslbadversion'], ))
+sum.write("Insecure SSL Versions: %s<br>\n" % (summary['sslerrorversion'], ))
+sum.write("Non-compliant SSL Versions: %s<br>\n" % (summary['sslwarnversion'], ))
 sum.write("Bad Ciphers: %s<br>\n" % (summary['sslbadcipher'], ))
 sum.write("Expired Certificates: %s<br>\n" % (summary['sslexpired'], ))
 sum.write("Certificate Subjects not in Domain: %s<br>\n" % (summary['sslnotdomain'], ))
@@ -479,6 +495,10 @@ sum.write("Low: %s<br>\n" % (summary['vulnlow'], ))
 sum.write("Medium: %s<br>\n" % (summary['vulnmedium'], ))
 sum.write("High: %s<br>\n" % (summary['vulnhigh'], ))
 sum.write("Critical: %s<br>\n" % (summary['vulncritical'], ))
+sum.write("<br>\n")
 
+sum.write("Pivot Targets</br>\n")
+for target in summary['pivottargets']:
+  sum.write("%s<br>\n" % (target, ))
 sum.write("</body></html>")
 sum.close()
