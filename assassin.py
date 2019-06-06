@@ -291,7 +291,7 @@ else:
                 if service.has_key('data'):
                   report.write('<div class="data">\n')
                   report.write('<pre>')
-                  report.write(service['data'].strip().replace("<", "&lt").replace(">", "&gt"))
+                  report.write(service['data'].encode('ascii', 'ignore').strip().replace("<", "&lt").replace(">", "&gt"))
                   report.write('</pre>\n')
                   report.write('</div>\n')
 
@@ -299,7 +299,7 @@ else:
                     report.write('<span class="datainfo">WAF</span>')
                     summary['waf'] += 1
 
-                  if "HTTP" in str(service['data']).split('\n')[0]:
+                  if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
                     httpstatus = str(service['data']).split('\n')[0].split(' ')[1]
                     if httpstatus == "200":
                       report.write('<span class="datawarning">Valid Response with IP Scan</span>')
@@ -315,26 +315,31 @@ else:
                             report.write('<span class="datainfo">Redirect to same host</span>')
                             summary['redirectsamehost'] += 1
                           else:
-                            report.write('<span class="datawarning">Redirect to different IP/host</span>')
-                            summary['redirectdifferentiphost'] += 1
-                            if domain not in line:
+                            if domain not in line.split('?')[0]:
                               report.write('<span class="dataerror">Redirect to different domain</span>')
                               summary['redirectdifferentdomain'] += 1
+                            else:
+                              report.write('<span class="datawarning">Redirect to different IP/host</span>')
+                              summary['redirectdifferentiphost'] += 1
                     if httpstatus[0] == "5":
                       report.write('<span class="datacritical">Server Error</span>')
                       summary['http5xx'] += 1
 
                 if service.has_key('ssl'):
-                  report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
-                  if service['ssl']['cert']['expired']:
-                    report.write('<span class="sslerror">Expired</span>')
-                    summary['sslexpired'] += 1
-                  if service['ssl']['cert']['subject']['CN'][0] == "*":
-                    report.write('<span class="sslwarning">Wildcard</span>')
-                    summary['sslwildcard'] += 1
-                  if domain not in service['ssl']['cert']['subject']['CN']:
-                    report.write('<span class="sslerror">Not in domain</span>')
-                    summary['sslnotdomain'] += 1
+                  if service['ssl'].has_key('cert'):
+                    if service['ssl']['cert'].has_key('subject'):
+                      if service['ssl']['cert']['subject'].has_key('CN'):
+                        report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
+                        if domain not in service['ssl']['cert']['subject']['CN']:
+                          report.write('<span class="sslerror">Not in domain</span>')
+                          summary['sslnotdomain'] += 1
+                        if service['ssl']['cert']['subject']['CN'][0] == "*":
+                          report.write('<span class="sslwarning">Wildcard</span>')
+                          summary['sslwildcard'] += 1
+                    if service['ssl']['cert'].has_key('expired'):
+                      if service['ssl']['cert']['expired']:
+                        report.write('<span class="sslerror">Expired</span>')
+                        summary['sslexpired'] += 1
 
                   if service['ssl'].has_key('versions'):
                     badversions = ['TLSv1', 'SSLv2', 'SSLv3', 'TLSv1.1']
