@@ -315,7 +315,7 @@ else:
                     if httpstatus[0] == "3":
                       summary['http3xx'] += 1
                       for line in service['data'].split("\n"):
-                        if "Location:" in line:
+                        if line.find("Location: ", 0, 10) <> -1:
                           if ip in line:
                             report.write('<span class="datawarning">Redirect to same IP</span>')
                             summary['redirectsameip'] += 1
@@ -324,7 +324,7 @@ else:
                             summary['redirectsamehost'] += 1
                           else:
                             if domain not in line.split('?')[0]:
-                              pivottarget = line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].lstrip('www.')
+                              pivottarget = line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].replace('www.', '')
                               report.write('<span class="dataerror">Pivot Target: %s</span>' % pivottarget)
                               summary['redirectdifferentdomain'] += 1
                               if pivottarget not in summary['redirectpivottargets']:
@@ -343,7 +343,7 @@ else:
                         report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
                         if domain not in service['ssl']['cert']['subject']['CN'].lower():
                           summary['sslnotdomain'] += 1
-                          pivottarget = service['ssl']['cert']['subject']['CN'].lower().lstrip('*.').rstrip('/').lstrip('www.')
+                          pivottarget = service['ssl']['cert']['subject']['CN'].lower().lstrip('*.').rstrip('/').replace('www.', '')
                           report.write('<span class="sslerror">Pivot Target: %s</span>' % pivottarget)
                           if pivottarget not in summary['sslpivottargets']:
                             summary['sslpivottargets'].append(pivottarget)
