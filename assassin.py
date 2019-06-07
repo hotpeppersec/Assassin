@@ -325,8 +325,8 @@ else:
                           else:
                             if domain not in line.split('?')[0]:
                               report.write('<span class="dataerror">Redirect to different domain</span>')
-                              print "Pivot Target: %s" % line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].lstrip('www.')
                               pivottarget = line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].lstrip('www.')
+                              report.write('<span class="dataerror">Pivot Target: %s</span>' % pivottarget)
                               summary['redirectdifferentdomain'] += 1
                               if pivottarget not in summary['redirectpivottargets']:
                                 summary['redirectpivottargets'].append(pivottarget)
@@ -343,9 +343,9 @@ else:
                       if service['ssl']['cert']['subject'].has_key('CN'):
                         report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
                         if domain not in service['ssl']['cert']['subject']['CN'].lower():
-                          report.write('<span class="sslerror">Not in domain</span>')
                           summary['sslnotdomain'] += 1
                           pivottarget = service['ssl']['cert']['subject']['CN'].lower().lstrip('*.').rstrip('/')
+                          report.write('<span class="sslerror">Pivot Target: %s</span>' % pivottarget)
                           if pivottarget not in summary['sslpivottargets']:
                             summary['sslpivottargets'].append(pivottarget)
                         if service['ssl']['cert']['subject']['CN'][0] == "*":
