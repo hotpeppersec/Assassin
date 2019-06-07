@@ -33,7 +33,8 @@ summary = {
   "vulncritical": 0,
   "waf": 0,
   "mapdata": [],
-  "pivottargets": []
+  "redirectpivottargets": [],
+  "sslpivottargets": []
 }
 
 def getDnsht(domain):
@@ -324,10 +325,11 @@ else:
                           else:
                             if domain not in line.split('?')[0]:
                               report.write('<span class="dataerror">Redirect to different domain</span>')
-                              pivottarget = line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip('/')
+                              print "Pivot Target: %s" % line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].lstrip('www.')
+                              pivottarget = line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].lstrip('www.')
                               summary['redirectdifferentdomain'] += 1
-                              if pivottarget not in summary['pivottargets']:
-                                summary['pivottargets'].append(pivottarget)
+                              if pivottarget not in summary['redirectpivottargets']:
+                                summary['redirectpivottargets'].append(pivottarget)
                             else:
                               report.write('<span class="datawarning">Redirect to different IP/host</span>')
                               summary['redirectdifferentiphost'] += 1
@@ -340,12 +342,12 @@ else:
                     if service['ssl']['cert'].has_key('subject'):
                       if service['ssl']['cert']['subject'].has_key('CN'):
                         report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
-                        if domain not in service['ssl']['cert']['subject']['CN']:
+                        if domain not in service['ssl']['cert']['subject']['CN'].lower():
                           report.write('<span class="sslerror">Not in domain</span>')
                           summary['sslnotdomain'] += 1
-                          pivottarget = service['ssl']['cert']['subject']['CN'].lstrip('*.')
-                          if pivottarget not in summary['pivottargets']:
-                            summary['pivottargets'].append(pivottarget)
+                          pivottarget = service['ssl']['cert']['subject']['CN'].lower().lstrip('*.').rstrip('/')
+                          if pivottarget not in summary['sslpivottargets']:
+                            summary['sslpivottargets'].append(pivottarget)
                         if service['ssl']['cert']['subject']['CN'][0] == "*":
                           report.write('<span class="sslwarning">Wildcard</span>')
                           summary['sslwildcard'] += 1
@@ -498,8 +500,12 @@ sum.write("High: %s<br>\n" % (summary['vulnhigh'], ))
 sum.write("Critical: %s<br>\n" % (summary['vulncritical'], ))
 sum.write("<br>\n")
 
-sum.write("Pivot Targets</br>\n")
-for target in summary['pivottargets']:
+sum.write("Redirect Pivot Targets</br>\n")
+for target in summary['redirectpivottargets']:
+  sum.write("%s<br>\n" % (target, ))
+sum.write("<br>\n")
+sum.write("SSL Pivot Targets</br>\n")
+for target in summary['sslpivottargets']:
   sum.write("%s<br>\n" % (target, ))
 sum.write("</body></html>")
 sum.close()
