@@ -308,7 +308,7 @@ else:
                     summary['waf'] += 1
 
                   if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
-                    httpstatus = str(service['data']).encode('ascii', 'ignore').split('\n')[0].split(' ')[1]
+                    httpstatus = str(service['data']).encode('utf-8').split('\n')[0].split(' ')[1]
                     if httpstatus == "200":
                       report.write('<span class="datawarning">Valid Response with IP Scan</span>')
                       summary['http200'] += 1
