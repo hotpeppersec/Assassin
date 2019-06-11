@@ -248,14 +248,18 @@ else:
 
           reverse = getRevDns(ip)
           if reverse:
-            report.write("Reverse DNS: %s<br>\n" % (reverse, ))
+            cleanreverse = reverse.lower().rstrip('.')
+            report.write("Reverse DNS: %s<br>\n" % (cleanreverse, ))
             if (
-              domain not in reverse.lower() and
-              '.in-addr.arpa.' not in reverse.lower() and
-              'amazonaws.com.' not in reverse.lower
+              domain not in cleanreverse and
+              '.in-addr.arpa' not in cleanreverse and
+              '.amazonaws.com' not in cleanreverse and
+              '.akamaitechnologies.com' not in cleanreverse and
+              '.cloudfront.net' not in cleanreverse
               ):
-              if reverse.lower().rstrip('.') not in summary['reversednspivottargets']:
-                summary['reversednspivottargets'].append(reverse.lower().rstrip('.'))
+              if cleanreverse not in summary['reversednspivottargets']:
+                summary['reversednspivottargets'].append(cleanreverse)
+
           whois = getWhois(ip)
           if whois:
             report.write("WhoIs: %s<br>\n" % (whois, ))
