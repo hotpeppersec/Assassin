@@ -476,6 +476,11 @@ sum.write("""}
 
 sum.write("<br>\n")
 sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
+if summary['cloudaws'] > 0:
+  sum.write("AWS Hosts: %s<br>\n" % (str(summary['cloudaws']), ))
+sum.write("AWS Regions:<br>\n")
+for region in summary['cloudawsregions']:
+  sum.write("%s<br>\n" % region)
 
 sum.write("<br>IPs<br>\n")
 sum.write("Total: %s<br>\n" % (summary['ips'], ))
@@ -485,10 +490,6 @@ sum.write("Reserved: %s<br>\n" % (summary['reservedips'], ))
 sum.write("<br>Services<br>\n")
 sum.write("Total: %s<br>\n" % (summary['services'], ))
 sum.write("Cloud: %s<br>\n" % (summary['cloudservices'], ))
-if summary['cloudaws'] > 0:
-  sum.write("%s hosts were detected in AWS distributed across the following regions:<br>\n" % (str(summary['cloudaws']), ))
-for region in summary['cloudawsregions']:
-  sum.write("%s<br>\n" % region)
 
 sum.write("<br>HTTP<br>\n")
 sum.write("WAF: %s<br>\n" % (summary['waf'], ))
