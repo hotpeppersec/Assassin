@@ -33,6 +33,7 @@ summary = {
   "vulncritical": 0,
   "waf": 0,
   "mapdata": [],
+  "reversednspivottargets": [],
   "redirectpivottargets": [],
   "sslpivottargets": []
 }
@@ -248,7 +249,9 @@ else:
           reverse = getRevDns(ip)
           if reverse:
             report.write("Reverse DNS: %s<br>\n" % (reverse, ))
-
+            if domain not in reverse.lower():
+              if reverse.lower() not in summary['reversednspivottargets']:
+                summary['reversednspivottargets'].append(reverse.lower())
           whois = getWhois(ip)
           if whois:
             report.write("WhoIs: %s<br>\n" % (whois, ))
@@ -308,7 +311,7 @@ else:
                     summary['waf'] += 1
 
                   if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
-                    httpstatus = str(service['data']).encode('utf-8').split('\n')[0].split(' ')[1]
+                    httpstatus = service['data'].encode('ascii', 'ignore').split('\n')[0].split(' ')[1]
                     if httpstatus == "200":
                       report.write('<span class="datawarning">Valid Response with IP Scan</span>')
                       summary['http200'] += 1
@@ -473,12 +476,12 @@ sum.write("Cloud: %s<br>\n" % (summary['cloudservices'], ))
 
 sum.write("<br>HTTP<br>\n")
 sum.write("WAF: %s<br>\n" % (summary['waf'], ))
-sum.write("Valid responses with IP scan: %s<br>\n" % (summary['http200'], ))
+sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
 sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
-sum.write("Redirects to the same host: %s<br>\n" % (summary['redirectsamehost'], ))
-sum.write("Redirects to the same IP: %s<br>\n" % (summary['redirectsameip'], ))
-sum.write("Redirects to a different IP and Host: %s<br>\n" % (summary['redirectdifferentiphost'], ))
-sum.write("Redirects to a different domain: %s<br>\n" % (summary['redirectdifferentdomain'], ))
+sum.write("Proper redirects to the same host: %s<br>\n" % (summary['redirectsamehost'], ))
+sum.write("Risky redirects to the same IP: %s<br>\n" % (summary['redirectsameip'], ))
+sum.write("Redirects that need lifecycle management: %s<br>\n" % (summary['redirectdifferentiphost'], ))
+sum.write("Pivot targets identified by redirect: %s<br>\n" % (summary['redirectdifferentdomain'], ))
 sum.write("Application/Server Errors: %s<br>\n" % (summary['http5xx'], ))
 
 sum.write("<br>SSL<br>\n")
@@ -499,11 +502,15 @@ sum.write("High: %s<br>\n" % (summary['vulnhigh'], ))
 sum.write("Critical: %s<br>\n" % (summary['vulncritical'], ))
 sum.write("<br>\n")
 
-sum.write("Redirect Pivot Targets</br>\n")
+sum.write("Reverse DNS Pivot Targets<br>\n")
+for target in summary['reversednspivottargets']:
+  sum.write("%s<br>\n" % (target, ))
+sum.write("<br>\n")
+sum.write("Redirect Pivot Targets<br>\n")
 for target in summary['redirectpivottargets']:
   sum.write("%s<br>\n" % (target, ))
 sum.write("<br>\n")
-sum.write("SSL Pivot Targets</br>\n")
+sum.write("SSL Pivot Targets<br>\n")
 for target in summary['sslpivottargets']:
   sum.write("%s<br>\n" % (target, ))
 sum.write("</body></html>")
