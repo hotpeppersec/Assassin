@@ -10,7 +10,9 @@ summary = {
   "privateips": 0,
   "reservedips": 0,
   "services": 0,
-  "cloudservices": 0 ,
+  "cloudservices": 0,
+  "cloudaws": 0,
+  "cloudawsregions": [],
   "starttlsservices": 0,
   "selfsignedservices": 0,
   "http200": 0,
@@ -223,9 +225,7 @@ else:
   summary['hosts'] = len(hosts)
   for host in hosts:
     print "Processing host: %s" % (host)
-    report.write('<div class="host">\n')
-    report.write('%s\n' % (host, ))
-    report.write('</div>\n')
+    report.write('<div class="host">%s</div>\n' % (host, ))
 
     #hostname/domain/URL tags will go here in the future
 
@@ -233,11 +233,8 @@ else:
     if ips:
       for ip in ips:
         summary['ips'] += 1
-        report.write('<div class="ip">\n')
-        report.write('IP: %s<br>\n' % (ip, ))
-
+        report.write('<div class="ip">IP: %s</div>\n' % (ip, ))
         if checkPrivate(ip) or checkReserved(ip):
-          report.write('</div>\n')
           if checkPrivate(ip):
             summary['privateips'] += 1
             report.write('<span class="iperror">Private</span>')
@@ -249,7 +246,16 @@ else:
           reverse = getRevDns(ip)
           if reverse:
             cleanreverse = reverse.lower().rstrip('.')
-            report.write("Reverse DNS: %s<br>\n" % (cleanreverse, ))
+            report.write('<div class="ip">Reverse DNS: %s</div>\n' % (cleanreverse, ))
+            if '.amazonaws.com' in cleanreverse:
+              summary['cloudaws'] += 1
+              report.write('<span class="ipinfo">AWS</span>')
+              awsregion = cleanreverse.split('.')[1]
+              if awsregion not in summary['cloudawsregions']:
+                summary['cloudawsregions'].append(awsregion)
+              report.write('<span class="ipinfo">AWS Region: %s</span>' % awsregion)
+            if '.cloudfront.net' in cleanreverse:
+              report.write('<span class="ipinfo">AWS</span>')
             if (
               domain not in cleanreverse and
               '.in-addr.arpa' not in cleanreverse and
@@ -262,9 +268,7 @@ else:
 
           whois = getWhois(ip)
           if whois:
-            report.write("WhoIs: %s<br>\n" % (whois, ))
-
-          report.write('</div>\n')
+            report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
 
           #if someCheck(ip):
             #report.write('<span class="iperror">BadTag</span>')
@@ -481,6 +485,10 @@ sum.write("Reserved: %s<br>\n" % (summary['reservedips'], ))
 sum.write("<br>Services<br>\n")
 sum.write("Total: %s<br>\n" % (summary['services'], ))
 sum.write("Cloud: %s<br>\n" % (summary['cloudservices'], ))
+if summary['cloudaws'] > 0:
+  sum.write("%s hosts were detected in AWS distributed across the following regions:<br>\n" % (str(summary['cloudaws']), ))
+for region in summary['cloudawsregions']:
+  sum.write("%s<br>\n" % region)
 
 sum.write("<br>HTTP<br>\n")
 sum.write("WAF: %s<br>\n" % (summary['waf'], ))

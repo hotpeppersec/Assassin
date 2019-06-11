@@ -26,6 +26,16 @@
     font:normal 20px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
+.ipinfo {
+    position: relative;
+    left: 40px;
+    padding: 3px;
+    border: 2px solid gray;
+    border-radius: 7px;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: gray;
+}
+
 .ipwarn {
     position: relative;
     left: 40px;
