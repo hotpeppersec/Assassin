@@ -249,9 +249,13 @@ else:
           reverse = getRevDns(ip)
           if reverse:
             report.write("Reverse DNS: %s<br>\n" % (reverse, ))
-            if domain not in reverse.lower():
-              if reverse.lower() not in summary['reversednspivottargets']:
-                summary['reversednspivottargets'].append(reverse.lower())
+            if (
+              domain not in reverse.lower() and
+              '.in-addr.arpa.' not in reverse.lower() and
+              'amazonaws.com.' not in reverse.lower
+              ):
+              if reverse.lower().rstrip('.') not in summary['reversednspivottargets']:
+                summary['reversednspivottargets'].append(reverse.lower().rstrip('.'))
           whois = getWhois(ip)
           if whois:
             report.write("WhoIs: %s<br>\n" % (whois, ))
