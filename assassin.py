@@ -250,7 +250,12 @@ else:
             if '.amazonaws.com' in cleanreverse:
               summary['cloudaws'] += 1
               report.write('<span class="ipinfo">AWS</span>')
-              awsregion = cleanreverse.split('.')[1]
+              if len(cleanreverse.replace('.amazonaws.com', '').split('.')) > 1:
+                awsregion = cleanreverse.split('.')[1]
+              else:
+                awsregion = cleanreverse.split('.')[0]
+              if awsregion == 'compute-1':
+                awsregion = 'us-east-1'
               if awsregion not in summary['cloudawsregions']:
                 summary['cloudawsregions'].append(awsregion)
               report.write('<span class="ipinfo">AWS Region: %s</span>' % awsregion)
@@ -307,11 +312,9 @@ else:
                       report.write('<span class="serviceerror">%s</span>' % (tag, ))
 
                 if service.has_key('data'):
-                  report.write('<div class="data">\n')
-                  report.write('<pre>')
+                  report.write('<div class="data"><pre>\n')
                   report.write(service['data'].encode('ascii', 'ignore').strip().replace("<", "&lt").replace(">", "&gt"))
-                  report.write('</pre>\n')
-                  report.write('</div>\n')
+                  report.write('</pre></div>\n')
 
                   if ("Server: cloudflare" in service['data'] or
                     "CloudFront" in service['data'] or
@@ -478,9 +481,9 @@ sum.write("<br>\n")
 sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
 if summary['cloudaws'] > 0:
   sum.write("AWS Hosts: %s<br>\n" % (str(summary['cloudaws']), ))
-sum.write("AWS Regions:<br>\n")
-for region in summary['cloudawsregions']:
-  sum.write("%s<br>\n" % region)
+  sum.write("AWS Regions:<br>\n")
+  for region in summary['cloudawsregions']:
+    sum.write("%s<br>\n" % region)
 
 sum.write("<br>IPs<br>\n")
 sum.write("Total: %s<br>\n" % (summary['ips'], ))
@@ -498,18 +501,18 @@ sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
 sum.write("Proper redirects to the same host: %s<br>\n" % (summary['redirectsamehost'], ))
 sum.write("Risky redirects to the same IP: %s<br>\n" % (summary['redirectsameip'], ))
 sum.write("Redirects that need lifecycle management: %s<br>\n" % (summary['redirectdifferentiphost'], ))
-sum.write("Pivot targets identified by redirect: %s<br>\n" % (summary['redirectdifferentdomain'], ))
+sum.write("Potential pivot targets identified by redirect: %s<br>\n" % (summary['redirectdifferentdomain'], ))
 sum.write("Application/Server Errors: %s<br>\n" % (summary['http5xx'], ))
 
 sum.write("<br>SSL<br>\n")
 sum.write("Wildcard Certificates: %s<br>\n" % (summary['sslwildcard'], ))
-sum.write("Start TLS Services: %s<br>\n" % (summary['starttlsservices'], ))
+sum.write("Vulnerable TLS Mail Services: %s<br>\n" % (summary['starttlsservices'], ))
 sum.write("Self-Signed Certificates: %s<br>\n" % (summary['selfsignedservices'], ))
 sum.write("Insecure SSL Versions: %s<br>\n" % (summary['sslerrorversion'], ))
 sum.write("Non-compliant SSL Versions: %s<br>\n" % (summary['sslwarnversion'], ))
-sum.write("Bad Ciphers: %s<br>\n" % (summary['sslbadcipher'], ))
+sum.write("Bad SSL Ciphers: %s<br>\n" % (summary['sslbadcipher'], ))
 sum.write("Expired Certificates: %s<br>\n" % (summary['sslexpired'], ))
-sum.write("Certificate Subjects not in Domain: %s<br>\n" % (summary['sslnotdomain'], ))
+sum.write("Potential pivot targets identified by SSL certificate: %s<br>\n" % (summary['sslnotdomain'], ))
 
 sum.write("<br>Vulnerabilities<br>\n")
 sum.write("Total: %s<br>\n" % (summary['vulntotal'], ))

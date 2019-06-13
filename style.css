@@ -13,7 +13,7 @@
     position: relative;
     left: 20px;
     top: 0px;
-    padding: 5px;
+    padding: 2px;
     width: 100%;
     font:normal 30px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
@@ -21,7 +21,7 @@
 .ip {
     position: relative;
     left: 40px;
-    padding: 5px;
+    padding: 0px;
     width: 100%;
     font:normal 20px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
@@ -29,7 +29,7 @@
 .ipinfo {
     position: relative;
     left: 40px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid gray;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -39,7 +39,7 @@
 .ipwarn {
     position: relative;
     left: 40px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid ornage;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -49,7 +49,7 @@
 .iperror {
     position: relative;
     left: 40px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid red;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -59,7 +59,7 @@
 .service {
     position: relative;
     left: 60px;
-    padding: 3px;
+    padding: 2px;
     width: 100%;
     font:normal 16px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
@@ -67,7 +67,7 @@
 .serviceinfo {
     position: relative;
     left: 60px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid gray;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -77,7 +77,7 @@
 .servicewarning {
     position: relative;
     left: 60px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid orange;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -87,7 +87,7 @@
 .serviceerror {
     position: relative;
     left: 60px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid red;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -105,7 +105,7 @@
 .datainfo {
     position: relative;
     left: 80px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid gray;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -115,7 +115,7 @@
 .datawarning {
     position: relative;
     left: 80px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid orange;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -125,7 +125,7 @@
 .dataerror {
     position: relative;
     left: 80px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid red;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -135,7 +135,7 @@
 .datacritical {
     position: relative;
     left: 80px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid purple;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -144,7 +144,7 @@
 
 .ssl {
     position: relative;
-    padding: 5px;
+    padding: 3px;
     left: 80px;
     font:normal 14px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
@@ -152,7 +152,7 @@
 .sslerror {
     position: relative;
     left: 80px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid red;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -162,7 +162,7 @@
 .sslwarning {
     position: relative;
     left: 80px;
-    padding: 3px;
+    padding: 2px;
     border: 2px solid orange;
     border-radius: 7px;
     font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
@@ -175,10 +175,10 @@ table.vulnerability {
     margin-left: 80px;
     margin-right: auto;
     border-collapse: collapse;
-    font:normal 12px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    font:normal 11px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
 .tr, td {
     border: 1px solid black;
-    font:normal 12px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    font:normal 11px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
