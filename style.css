@@ -18,6 +18,36 @@
     font:normal 30px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
+.hostinfo {
+    position: relative;
+    left: 20px;
+    padding: 2px;
+    border: 2px solid gray;
+    border-radius: 7px;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: gray;
+}
+
+.hostwarn {
+    position: relative;
+    left: 20px;
+    padding: 2px;
+    border: 2px solid orange;
+    border-radius: 7px;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: orange;
+}
+
+.hosterror {
+    position: relative;
+    left: 20px;
+    padding: 2px;
+    border: 2px solid red;
+    border-radius: 7px;
+    font:normal 10px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+    color: red;
+}
+
 .ip {
     position: relative;
     left: 40px;

@@ -6,6 +6,7 @@ import json
 
 summary = { 
   "hosts": 0,
+  "nonprod": 0,
   "ips": 0,
   "privateips": 0,
   "reservedips": 0,
@@ -13,6 +14,7 @@ summary = {
   "cloudservices": 0,
   "cloudaws": 0,
   "cloudawsregions": [],
+  "cloudgcp": 0,
   "starttlsservices": 0,
   "selfsignedservices": 0,
   "http200": 0,
@@ -209,9 +211,7 @@ style.close()
 report.write('</style>\n')
 report.write('</head>\n')
 report.write('<body>\n')
-report.write('<div class="title">\n')
-report.write('%s\n' % (domain, ))
-report.write('</div>\n')
+report.write('<div class="title">%s</div>\n' % (domain, ))
 
 dnsht = getDnsht(domain)
 dnsdb = getDnsdb(domain)
@@ -226,6 +226,10 @@ else:
   for host in hosts:
     print "Processing host: %s" % (host)
     report.write('<div class="host">%s</div>\n' % (host, ))
+
+    if ("demo" in host.lower() or "qa" in host.lower() or "test" in host.lower() or "dev" in host.lower()):
+      report.write('<span class="hostwarn">Possible non-production system</span>')
+      summary['nonprod'] += 1
 
     #hostname/domain/URL tags will go here in the future
 
@@ -259,6 +263,9 @@ else:
               if awsregion not in summary['cloudawsregions']:
                 summary['cloudawsregions'].append(awsregion)
               report.write('<span class="ipinfo">AWS Region: %s</span>' % awsregion)
+            if 'bc.googleusercontent.com' in cleanreverse:
+              report.write('<span class="ipinfo">GCP</span>')
+              summary['cloudgcp'] += 1
             if '.cloudfront.net' in cleanreverse:
               report.write('<span class="ipinfo">AWS</span>')
             if (
@@ -362,9 +369,12 @@ else:
                         if domain not in service['ssl']['cert']['subject']['CN'].lower():
                           summary['sslnotdomain'] += 1
                           pivottarget = service['ssl']['cert']['subject']['CN'].lower().lstrip('*.').rstrip('/').replace('www.', '')
-                          report.write('<span class="sslerror">Pivot Target: %s</span>' % pivottarget)
-                          if pivottarget not in summary['sslpivottargets']:
-                            summary['sslpivottargets'].append(pivottarget)
+                          if ip == pivottarget:
+                            report.write('<span class="sslwarning">Pivot Target: %s</span>' % pivottarget)
+                          else:
+                            report.write('<span class="sslerror">Pivot Target: %s</span>' % pivottarget)
+                            if pivottarget not in summary['sslpivottargets']:
+                              summary['sslpivottargets'].append(pivottarget)
                         if service['ssl']['cert']['subject']['CN'][0] == "*":
                           report.write('<span class="sslwarning">Wildcard</span>')
                           summary['sslwildcard'] += 1
@@ -479,11 +489,14 @@ sum.write("""}
 
 sum.write("<br>\n")
 sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
+sum.write("Non-Production Hosts: %s<br>\n" % (str(summary['nonprod']), ))
 if summary['cloudaws'] > 0:
   sum.write("AWS Hosts: %s<br>\n" % (str(summary['cloudaws']), ))
   sum.write("AWS Regions:<br>\n")
   for region in summary['cloudawsregions']:
     sum.write("%s<br>\n" % region)
+if summary['cloudgcp'] > 0:
+  sum.write("GCP Hosts: %s<br>\n" % (str(summary['cloudgcp']), ))
 
 sum.write("<br>IPs<br>\n")
 sum.write("Total: %s<br>\n" % (summary['ips'], ))
