@@ -306,13 +306,10 @@ else:
               report.write('<div class="ip">WhoIs: %s</div>\n' % (whois['name'], ))
               if whois not in summary['whois']:
                 summary['whois'].append(whois)
-                report.write('<div class="service">Potential network block pivot target:</div>')
-                if whois.has_key("name"):
-                  report.write('<div class="service">Name: %s</div>' % (whois['name'], ))
                 if whois.has_key("handle"):
                   report.write('<div class="service">Handle: %s</div>' % (whois['handle'], ))
                 if whois.has_key("startAddress") and whois.has_key("endAddress"):
-                  report.write('<div class="service">IP Range: %s-%s</div>' % (whois['startAddress'], whois['endAddress']))
+                  report.write('<div class="service">IP Range: %s - %s</div>' % (whois['startAddress'], whois['endAddress']))
                 if whois.has_key("asns"):
                   if len(whois['asns']) > 0:
                     for asn in whois['asns']:
@@ -622,9 +619,25 @@ if len(summary['sslpivottargets']) > 0:
   for target in summary['sslpivottargets']:
     sum.write("%s<br>\n" % (target, ))
 if len(summary['whois']) > 0:
-  sum.write("<br>Whois Netblock Pivot Targets<br>\n")
+  sum.write('<br>Whois Netblock Pivot Targets<br>\n')
+  sum.write('<table cellpadding=2 cellspacing=0 border=1>\n')
+  sum.write('<tr><td>Name</td><td>Handle</td><td>CIDR Blocks</td><td>Start Address</td><td>End Address</td><td>ASNs</td></tr>')
   for entry in summary['whois']:
-    sum.write("%s<br>\n" % (entry, ))
-
+    sum.write('<tr>\n')
+    sum.write('<td>%s</td>\n' % entry['name'])
+    sum.write('<td>%s</td>\n' % entry['handle'])
+    sum.write('<td>')
+    if len(entry['cidrs']) > 0:
+      for cidr in entry['cidrs']:
+        sum.write('%s/%s ' % (cidr['v4prefix'], cidr['length']))
+    sum.write('</td>\n')
+    sum.write('<td>%s</td>\n' % entry['startAddress'])
+    sum.write('<td>%s</td>\n' % entry['endAddress'])
+    sum.write('<td>')
+    if len(entry['asns']) > 0:
+      for asn in entry['asns']:
+        sum.write('%s ' % (asn, ))
+    sum.write('</td>\n')
+    sum.write('</tr>\n')
 sum.write("</body></html>")
 sum.close()
