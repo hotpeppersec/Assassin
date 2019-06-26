@@ -17,6 +17,10 @@ summary = {
   "cloudgcp": 0,
   "starttlsservices": 0,
   "selfsignedservices": 0,
+  "servicessh": 0,
+  "servicentp": 0,
+  "serviceftp": 0,
+  "servicemail": 0,
   "http200": 0,
   "http3xx": 0,
   "redirectsameip": 0,
@@ -227,7 +231,14 @@ else:
     print "Processing host: %s" % (host)
     report.write('<div class="host">%s</div>\n' % (host, ))
 
-    if ("demo" in host.lower() or "qa" in host.lower() or "test" in host.lower() or "dev" in host.lower()):
+    if (
+      "demo" in host.lower() or
+      "qa" in host.lower() or
+      "test" in host.lower() or
+      "dev" in host.lower() or
+      "beta" in host.lower() or
+      "preprod" in host.lower()
+      ):
       report.write('<span class="hostwarn">Possible non-production system</span>')
       summary['nonprod'] += 1
 
@@ -273,7 +284,8 @@ else:
               '.in-addr.arpa' not in cleanreverse and
               '.amazonaws.com' not in cleanreverse and
               '.akamaitechnologies.com' not in cleanreverse and
-              '.cloudfront.net' not in cleanreverse
+              '.cloudfront.net' not in cleanreverse and
+              '.bc.googleusercontent.com' not in cleanreverse
               ):
               if cleanreverse not in summary['reversednspivottargets']:
                 summary['reversednspivottargets'].append(cleanreverse)
@@ -331,6 +343,40 @@ else:
                     "BIGip" in service['data']):
                     report.write('<span class="datainfo">WAF</span>')
                     summary['waf'] += 1
+
+                  if (
+                    "openssh" in service['data'].lower() or
+                    (
+                      "key type: " in service['data'].lower() and
+                      "kex algorithms:" in service['data'].lower() and
+                      "server host key algorithms:" in service['data'].lower() and
+                      "encryption algorithms:" in service['data'].lower() and
+                      "mac algorithms:" in service['data'].lower() and
+                      "compression algorithms:" in service['data'].lower()
+                      )
+                    ):
+                    report.write('<span class="dataerror">SSH</span>')
+                    summary['servicessh'] += 1
+
+                  if "ntp" in service['data'].lower():
+                    report.write('<span class="dataerror">NTP</span>')
+                    summary['servicentp'] += 1
+
+                  if (
+                    "pure-ftpd" in service['data'].lower() or
+                    "serv-u ftp server" in service['data'].lower()
+                    ):
+                    report.write('<span class="datainfo">FTP</span>')
+                    summary['serviceftp'] += 1
+
+                  if (
+                    "dovecot" in service['data'].lower() or
+                    "exim" in service['data'].lower() or
+                    "smtp" in service['data'].lower() or
+                    "imap" in service['data'].lower()
+                    ):
+                    report.write('<span class="datainfo">Mail</span>')
+                    summary['servicemail'] += 1
 
                   if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
                     httpstatus = service['data'].encode('ascii', 'ignore').split('\n')[0].split(' ')[1]
@@ -506,6 +552,11 @@ sum.write("Reserved: %s<br>\n" % (summary['reservedips'], ))
 sum.write("<br>Services<br>\n")
 sum.write("Total: %s<br>\n" % (summary['services'], ))
 sum.write("Cloud: %s<br>\n" % (summary['cloudservices'], ))
+
+sum.write("SSH Services: %s<br>\n" % (summary['servicessh'], ))
+sum.write("FTP Services: %s<br>\n" % (summary['serviceftp'], ))
+sum.write("NTP Services: %s<br>\n" % (summary['servicentp'], ))
+sum.write("Mail Services: %s<br>\n" % (summary['servicemail'], ))
 
 sum.write("<br>HTTP<br>\n")
 sum.write("WAF: %s<br>\n" % (summary['waf'], ))
