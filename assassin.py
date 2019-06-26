@@ -43,7 +43,8 @@ summary = {
   "mapdata": [],
   "reversednspivottargets": [],
   "redirectpivottargets": [],
-  "sslpivottargets": []
+  "sslpivottargets": [],
+  "whois": []
 }
 
 def getDnsht(domain):
@@ -191,13 +192,22 @@ def getWhois(ip):
   try:
     jsonresponse = urllib2.urlopen(url)
     response=json.loads(jsonresponse.read())
-    if response.has_key("name"):
-      return response["name"]
-    elif response.has_key("entities"):
-      return response["entities"][0]["handle"]
-    else:
-      return False
-  except:
+    output = {}
+    if response.has_key("arin_originas0_originautnums"):
+      output['name'] = response['name']
+    if response.has_key("handle"):
+      output['handle'] = response['handle']
+    if response.has_key("arin_originas0_originautnums"):
+      output['asns'] = response["arin_originas0_originautnums"]
+    if response.has_key("startAddress"):
+      output['startAddress'] = response["startAddress"]
+    if response.has_key("endAddress"):
+      output['endAddress'] = response["endAddress"]
+    if response.has_key("cidr0_cidrs"):
+      output['cidrs'] = response['cidr0_cidrs']
+    return output
+  except Exception as e:
+    print e
     return False
 
 domain = raw_input("What domain would you like to search? ")
@@ -292,7 +302,21 @@ else:
 
           whois = getWhois(ip)
           if whois:
-            report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
+            if whois.has_key("name"):
+              report.write('<div class="ip">WhoIs: %s</div>\n' % (whois['name'], ))
+              if whois not in summary['whois']:
+                summary['whois'].append(whois)
+                report.write('<div class="service">Potential network block pivot target:</div>')
+                if whois.has_key("name"):
+                  report.write('<div class="service">Name: %s</div>' % (whois['name'], ))
+                if whois.has_key("handle"):
+                  report.write('<div class="service">Handle: %s</div>' % (whois['handle'], ))
+                if whois.has_key("startAddress") and whois.has_key("endAddress"):
+                  report.write('<div class="service">IP Range: %s-%s</div>' % (whois['startAddress'], whois['endAddress']))
+                if whois.has_key("asns"):
+                  if len(whois['asns']) > 0:
+                    for asn in whois['asns']:
+                      report.write('<div class="service">Autonomous System Number: %s</div>' % (asn, ))
 
           #if someCheck(ip):
             #report.write('<span class="iperror">BadTag</span>')
@@ -584,18 +608,23 @@ sum.write("Low: %s<br>\n" % (summary['vulnlow'], ))
 sum.write("Medium: %s<br>\n" % (summary['vulnmedium'], ))
 sum.write("High: %s<br>\n" % (summary['vulnhigh'], ))
 sum.write("Critical: %s<br>\n" % (summary['vulncritical'], ))
-sum.write("<br>\n")
 
-sum.write("Reverse DNS Pivot Targets<br>\n")
-for target in summary['reversednspivottargets']:
-  sum.write("%s<br>\n" % (target, ))
-sum.write("<br>\n")
-sum.write("Redirect Pivot Targets<br>\n")
-for target in summary['redirectpivottargets']:
-  sum.write("%s<br>\n" % (target, ))
-sum.write("<br>\n")
-sum.write("SSL Pivot Targets<br>\n")
-for target in summary['sslpivottargets']:
-  sum.write("%s<br>\n" % (target, ))
+if len(summary['reversednspivottargets']) > 0:
+  sum.write("<br>Reverse DNS Pivot Targets<br>\n")
+  for target in summary['reversednspivottargets']:
+    sum.write("%s<br>\n" % (target, ))
+if len(summary['redirectpivottargets']) > 0:
+  sum.write("<br>Redirect Pivot Targets<br>\n")
+  for target in summary['redirectpivottargets']:
+    sum.write("%s<br>\n" % (target, ))
+if len(summary['sslpivottargets']) > 0:
+  sum.write("<br>SSL Pivot Targets<br>\n")
+  for target in summary['sslpivottargets']:
+    sum.write("%s<br>\n" % (target, ))
+if len(summary['whois']) > 0:
+  sum.write("<br>Whois Netblock Pivot Targets<br>\n")
+  for entry in summary['whois']:
+    sum.write("%s<br>\n" % (entry, ))
+
 sum.write("</body></html>")
 sum.close()
