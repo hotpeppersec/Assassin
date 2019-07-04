@@ -21,6 +21,7 @@ summary = {
   "servicentp": 0,
   "serviceftp": 0,
   "servicemail": 0,
+  "serviceversions": 0,
   "http1": 0,
   "http200": 0,
   "http3xx": 0,
@@ -45,7 +46,6 @@ summary = {
   "reversednspivottargets": [],
   "redirectpivottargets": [],
   "sslpivottargets": [],
-  "bgpasns": []
 }
 
 def getDnsht(domain):
@@ -199,16 +199,6 @@ def getWhois(ip):
     print e
     return False
 
-def getBgp(ip):
-  url = "http://api.bgpview.io/ip/%s" % (ip, )
-  try:
-    jsonresponse = urllib2.urlopen(url)
-    response = json.loads(jsonresponse.read())
-    return response
-  except Exception as e:
-    print e
-    return False
-
 domain = raw_input("What domain would you like to search? ")
 reportfile = "%s-detail.html" % (domain.split(".")[0], )
 report = open(reportfile, "w")
@@ -306,18 +296,6 @@ else:
           if whois:
             report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
 
-          bgp = getBgp(ip)
-          if bgp:
-            if bgp.has_key("data"):
-              if bgp['data'].has_key("prefixes"):
-                for prefix in bgp['data']['prefixes']:
-                  if prefix.has_key("asn"):
-                    if prefix['asn'].has_key("asn") and prefix['asn'].has_key("name"):
-                      report.write('<div class="ip">BGP ASN: %s: %s</div>' % (prefix['asn']['asn'], prefix['asn']['name']))
-                      bgpasn = {"asn": prefix['asn']['asn'], "name": prefix['asn']['name']}
-                      if bgpasn not in summary['bgpasns']:
-                        summary['bgpasns'].append(bgpasn) 
-            
           #if someCheck(ip):
             #report.write('<span class="iperror">BadTag</span>')
 
@@ -358,6 +336,14 @@ else:
                   report.write('<div class="data"><pre>\n')
                   report.write(service['data'].encode('ascii', 'ignore').strip().replace("<", "&lt").replace(">", "&gt"))
                   report.write('</pre></div>\n')
+
+                  for line in service['data'].encode('ascii', 'ignore').split('\n'):
+                    if "Server:" in line:
+                      server = line.split(" ")[1]
+                      serverparts = server.split("/")
+                      if len(serverparts) > 1:
+                        report.write('<span class="dataerror">Service identified as %s</span>' % (server, ))
+                        summary['serviceversions'] += 1
 
                   if ("Server: cloudflare" in service['data'] or
                     "CloudFront" in service['data'] or
@@ -626,9 +612,5 @@ if len(summary['sslpivottargets']) > 0:
   sum.write("<br>SSL Pivot Targets<br>\n")
   for target in summary['sslpivottargets']:
     sum.write("%s<br>\n" % (target, ))
-if len(summary['bgpasns']) > 0:
-  sum.write('<br>BGP ASN Pivot Targets<br>\n')
-  for asn in summary['bgpasns']:
-    sum.write('%s - %s<br>\n' % (asn['asn'], asn['name']))
 sum.write("</body></html>")
 sum.close()
