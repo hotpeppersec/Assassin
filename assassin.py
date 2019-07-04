@@ -22,6 +22,8 @@ summary = {
   "serviceftp": 0,
   "servicemail": 0,
   "serviceversions": 0,
+  "serviceeol": 0,
+  "serviceeos": 0,
   "http1": 0,
   "http200": 0,
   "http3xx": 0,
@@ -342,8 +344,24 @@ else:
                       server = line.split(" ")[1]
                       serverparts = server.split("/")
                       if len(serverparts) > 1:
-                        report.write('<span class="dataerror">Service identified as %s</span>' % (server, ))
-                        summary['serviceversions'] += 1
+                        if "awselb/2.0" not in server:
+                          report.write('<span class="dataerror">Service identified as %s</span>' % (server, ))
+                          summary['serviceversions'] += 1
+
+                      if "awselb/2.0" not in server:
+
+                        if (
+                          "Apache/2.2." in server
+                          ):
+                          report.write('<span class="dataerror">End of Life</span>')
+                          summary['serviceeol'] += 1
+
+                        if (
+                          "Microsoft-IIS/7.5" in server
+                          ):
+                          report.write('<span class="dataerror">End of Mainstream Support</span>')
+                          summary['serviceeos'] += 1
+
 
                   if ("Server: cloudflare" in service['data'] or
                     "CloudFront" in service['data'] or
@@ -572,16 +590,19 @@ sum.write("FTP Services: %s<br>\n" % (summary['serviceftp'], ))
 sum.write("NTP Services: %s<br>\n" % (summary['servicentp'], ))
 sum.write("Mail Services: %s<br>\n" % (summary['servicemail'], ))
 
-sum.write("<br>HTTP<br>\n")
-sum.write("HTTP/1.0: %s<br>\n" % (summary['http1'], ))
-sum.write("WAF: %s<br>\n" % (summary['waf'], ))
+sum.write("<br>HTTP Hardening<br>\n")
+sum.write("Web services protected by a WAF: %s<br>\n" % (summary['waf'], ))
+sum.write("Web services that respond to HTTP/1.0 requests: %s<br>\n" % (summary['http1'], ))
+sum.write("Web services that identify their version: %s<br>\n" % (summary['serviceversions'], ))
 sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
 sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
-sum.write("Proper redirects to the same host: %s<br>\n" % (summary['redirectsamehost'], ))
-sum.write("Risky redirects to the same IP: %s<br>\n" % (summary['redirectsameip'], ))
-sum.write("Redirects that need lifecycle management: %s<br>\n" % (summary['redirectdifferentiphost'], ))
-sum.write("Potential pivot targets identified by redirect: %s<br>\n" % (summary['redirectdifferentdomain'], ))
+sum.write("Proper redirects to the same DNS host: %s<br>\n" % (summary['redirectsamehost'], ))
+sum.write("Redirects to the same IP (should point to DNS name instead): %s<br>\n" % (summary['redirectsameip'], ))
+sum.write("Redirects to the same domain (need lifecycle management): %s<br>\n" % (summary['redirectdifferentiphost'], ))
+sum.write("Redirects to different domains (pivot targets): %s<br>\n" % (summary['redirectdifferentdomain'], ))
 sum.write("Application/Server Errors: %s<br>\n" % (summary['http5xx'], ))
+sum.write("End-of-life Services: %s<br>\n" % (summary['serviceeol'], ))
+sum.write("End-of-support Services: %s<br>\n" % (summary['serviceeos'], ))
 
 sum.write("<br>SSL<br>\n")
 sum.write("Wildcard Certificates: %s<br>\n" % (summary['sslwildcard'], ))
