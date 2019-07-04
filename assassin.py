@@ -21,6 +21,7 @@ summary = {
   "servicentp": 0,
   "serviceftp": 0,
   "servicemail": 0,
+  "http1": 0,
   "http200": 0,
   "http3xx": 0,
   "redirectsameip": 0,
@@ -44,7 +45,7 @@ summary = {
   "reversednspivottargets": [],
   "redirectpivottargets": [],
   "sslpivottargets": [],
-  "whois": []
+  "bgpasns": []
 }
 
 def getDnsht(domain):
@@ -192,20 +193,18 @@ def getWhois(ip):
   try:
     jsonresponse = urllib2.urlopen(url)
     response=json.loads(jsonresponse.read())
-    output = {}
-    if response.has_key("arin_originas0_originautnums"):
-      output['name'] = response['name']
-    if response.has_key("handle"):
-      output['handle'] = response['handle']
-    if response.has_key("arin_originas0_originautnums"):
-      output['asns'] = response["arin_originas0_originautnums"]
-    if response.has_key("startAddress"):
-      output['startAddress'] = response["startAddress"]
-    if response.has_key("endAddress"):
-      output['endAddress'] = response["endAddress"]
-    if response.has_key("cidr0_cidrs"):
-      output['cidrs'] = response['cidr0_cidrs']
-    return output
+    if response.has_key("name"):
+      return response['name']
+  except Exception as e:
+    print e
+    return False
+
+def getBgp(ip):
+  url = "http://api.bgpview.io/ip/%s" % (ip, )
+  try:
+    jsonresponse = urllib2.urlopen(url)
+    response = json.loads(jsonresponse.read())
+    return response
   except Exception as e:
     print e
     return False
@@ -229,6 +228,7 @@ report.write('<div class="title">%s</div>\n' % (domain, ))
 
 dnsht = getDnsht(domain)
 dnsdb = getDnsdb(domain)
+print dnsdb
 dnsvt = getVtdomain(domain)
 hosts = dnsCombine(dnsht, dnsdb, dnsvt)
 
@@ -247,7 +247,9 @@ else:
       "test" in host.lower() or
       "dev" in host.lower() or
       "beta" in host.lower() or
-      "preprod" in host.lower()
+      "preprod" in host.lower() or
+      "uat" in host.lower() or
+      "poc" in host.lower()
       ):
       report.write('<span class="hostwarn">Possible non-production system</span>')
       summary['nonprod'] += 1
@@ -302,19 +304,20 @@ else:
 
           whois = getWhois(ip)
           if whois:
-            if whois.has_key("name"):
-              report.write('<div class="ip">WhoIs: %s</div>\n' % (whois['name'], ))
-              if whois not in summary['whois']:
-                summary['whois'].append(whois)
-                if whois.has_key("handle"):
-                  report.write('<div class="service">Handle: %s</div>' % (whois['handle'], ))
-                if whois.has_key("startAddress") and whois.has_key("endAddress"):
-                  report.write('<div class="service">IP Range: %s - %s</div>' % (whois['startAddress'], whois['endAddress']))
-                if whois.has_key("asns"):
-                  if len(whois['asns']) > 0:
-                    for asn in whois['asns']:
-                      report.write('<div class="service">Autonomous System Number: %s</div>' % (asn, ))
+            report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
 
+          bgp = getBgp(ip)
+          if bgp:
+            if bgp.has_key("data"):
+              if bgp['data'].has_key("prefixes"):
+                for prefix in bgp['data']['prefixes']:
+                  if prefix.has_key("asn"):
+                    if prefix['asn'].has_key("asn") and prefix['asn'].has_key("name"):
+                      report.write('<div class="ip">BGP ASN: %s: %s</div>' % (prefix['asn']['asn'], prefix['asn']['name']))
+                      bgpasn = {"asn": prefix['asn']['asn'], "name": prefix['asn']['name']}
+                      if bgpasn not in summary['bgpasns']:
+                        summary['bgpasns'].append(bgpasn) 
+            
           #if someCheck(ip):
             #report.write('<span class="iperror">BadTag</span>')
 
@@ -398,6 +401,10 @@ else:
                     ):
                     report.write('<span class="datainfo">Mail</span>')
                     summary['servicemail'] += 1
+
+                  if "HTTP/1.0" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
+                    summary['http1'] += 1
+                    report.write('<span class="dataerror">HTTP 1.0</span>')
 
                   if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
                     httpstatus = service['data'].encode('ascii', 'ignore').split('\n')[0].split(' ')[1]
@@ -580,6 +587,7 @@ sum.write("NTP Services: %s<br>\n" % (summary['servicentp'], ))
 sum.write("Mail Services: %s<br>\n" % (summary['servicemail'], ))
 
 sum.write("<br>HTTP<br>\n")
+sum.write("HTTP/1.0: %s<br>\n" % (summary['http1'], ))
 sum.write("WAF: %s<br>\n" % (summary['waf'], ))
 sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
 sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
@@ -618,26 +626,9 @@ if len(summary['sslpivottargets']) > 0:
   sum.write("<br>SSL Pivot Targets<br>\n")
   for target in summary['sslpivottargets']:
     sum.write("%s<br>\n" % (target, ))
-if len(summary['whois']) > 0:
-  sum.write('<br>Whois Netblock Pivot Targets<br>\n')
-  sum.write('<table cellpadding=2 cellspacing=0 border=1>\n')
-  sum.write('<tr><td>Name</td><td>Handle</td><td>CIDR Blocks</td><td>Start Address</td><td>End Address</td><td>ASNs</td></tr>')
-  for entry in summary['whois']:
-    sum.write('<tr>\n')
-    sum.write('<td>%s</td>\n' % entry['name'])
-    sum.write('<td>%s</td>\n' % entry['handle'])
-    sum.write('<td>')
-    if len(entry['cidrs']) > 0:
-      for cidr in entry['cidrs']:
-        sum.write('%s/%s ' % (cidr['v4prefix'], cidr['length']))
-    sum.write('</td>\n')
-    sum.write('<td>%s</td>\n' % entry['startAddress'])
-    sum.write('<td>%s</td>\n' % entry['endAddress'])
-    sum.write('<td>')
-    if len(entry['asns']) > 0:
-      for asn in entry['asns']:
-        sum.write('%s ' % (asn, ))
-    sum.write('</td>\n')
-    sum.write('</tr>\n')
+if len(summary['bgpasns']) > 0:
+  sum.write('<br>BGP ASN Pivot Targets<br>\n')
+  for asn in summary['bgpasns']:
+    sum.write('%s - %s<br>\n' % (asn['asn'], asn['name']))
 sum.write("</body></html>")
 sum.close()
