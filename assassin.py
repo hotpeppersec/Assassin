@@ -27,6 +27,7 @@ summary = {
   "http1": 0,
   "http200": 0,
   "http3xx": 0,
+  "htmlforms": 0,
   "redirectsameip": 0,
   "redirectsamehost": 0,
   "redirectdifferentiphost": 0,
@@ -43,6 +44,7 @@ summary = {
   "vulnmedium": 0,
   "vulnhigh": 0,
   "vulncritical": 0,
+  "keyleaks": 0,
   "waf": 0,
   "mapdata": [],
   "reversednspivottargets": [],
@@ -79,6 +81,7 @@ def getDnsdb(domain):
   try:
     output = []
     response = urllib2.urlopen(request)
+    print response
     for result in response.read().split("\n"):
       if (result.strip() != "" and result[0] != ";"):
         fields = result.split(" ")
@@ -220,7 +223,6 @@ report.write('<div class="title">%s</div>\n' % (domain, ))
 
 dnsht = getDnsht(domain)
 dnsdb = getDnsdb(domain)
-print dnsdb
 dnsvt = getVtdomain(domain)
 hosts = dnsCombine(dnsht, dnsdb, dnsvt)
 
@@ -241,6 +243,7 @@ else:
       "beta" in host.lower() or
       "preprod" in host.lower() or
       "uat" in host.lower() or
+      "staging" in host.lower() or
       "poc" in host.lower()
       ):
       report.write('<span class="hostwarn">Possible non-production system</span>')
@@ -439,6 +442,32 @@ else:
                       report.write('<span class="datacritical">Server Error</span>')
                       summary['http5xx'] += 1
 
+                if service.has_key('http'):
+                  if service['http'].has_key('html'):
+                    if service['http']['html'] is not None:
+                      htmllines = service['http']['html'].encode('ascii', 'ignore').strip().replace("<", "&lt").replace(">", "&gt").split("\n")
+                      report.write('<div class="data"><pre>\n')
+                      for line in htmllines:
+                        if len(line.strip().rstrip("\n")) > 0:
+                          report.write("%s\n" % (line.encode('ascii', 'ignore').replace("<", "&lt").replace(">", "&gt"), ))
+                          if ("&key=" in line.lower() or "apikey" in line.lower()) and ("googleapis.com" not in line.lower()):
+                            report.write('</pre></dev>\n')
+                            report.write('<span class="dataerror">Possible Key Leak (High Confidence)</span>')
+                            report.write('<div class="data"><pre>\n')
+                            summary['keyleaks'] += 1
+                          elif (
+                            (("api" in line.lower() and "key" in line.lower() and "=" in line) or ("authorization=" in line.lower())) and ("googleapis.com" not in line.lower())):
+                            report.write('</pre></dev>\n')
+                            report.write('<span class="datawarning">Possible Key Leak (Low Confidence)</span>')
+                            report.write('<div class="data"><pre>\n')
+                            summary['keyleaks'] += 1
+                          if "form" in line.lower() and "action=" in line.lower():
+                            report.write('</pre></dev>\n')
+                            report.write('<span class="datainfo">HTML Form</span>')
+                            report.write('<div class="data"><pre>\n')
+                            summary['htmlforms'] += 1
+                      report.write('</pre></div>\n')
+
                 if service.has_key('ssl'):
                   if service['ssl'].has_key('cert'):
                     if service['ssl']['cert'].has_key('subject'):
@@ -595,6 +624,8 @@ sum.write("Web services protected by a WAF: %s<br>\n" % (summary['waf'], ))
 sum.write("Web services that respond to HTTP/1.0 requests: %s<br>\n" % (summary['http1'], ))
 sum.write("Web services that identify their version: %s<br>\n" % (summary['serviceversions'], ))
 sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
+sum.write("HTML Forms Detected: %s<br>\n" % (summary['htmlforms'], ))
+sum.write("Possible API Key Leaks Detected: %s<br>\n" % (summary['keyleaks'], ))
 sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
 sum.write("Proper redirects to the same DNS host: %s<br>\n" % (summary['redirectsamehost'], ))
 sum.write("Redirects to the same IP (should point to DNS name instead): %s<br>\n" % (summary['redirectsameip'], ))
