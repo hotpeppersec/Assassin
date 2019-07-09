@@ -235,16 +235,19 @@ else:
     print "Processing host: %s" % (host)
     report.write('<div class="host">%s</div>\n' % (host, ))
 
+#NonProd
+
     if (
       "demo" in host.lower() or
       "qa" in host.lower() or
       "test" in host.lower() or
-      "dev" in host.lower() or
+      ("dev" in host.lower() and "device" not in host.lower()) or
       "beta" in host.lower() or
       "preprod" in host.lower() or
       "uat" in host.lower() or
       "staging" in host.lower() or
-      "poc" in host.lower()
+      "poc" in host.lower() or
+      ("stage" in host.lower() or "staging" in host.lower())
       ):
       report.write('<span class="hostwarn">Possible non-production system</span>')
       summary['nonprod'] += 1
@@ -365,6 +368,7 @@ else:
                           report.write('<span class="dataerror">End of Mainstream Support</span>')
                           summary['serviceeos'] += 1
 
+#WAF
 
                   if ("Server: cloudflare" in service['data'] or
                     "CloudFront" in service['data'] or
@@ -442,6 +446,8 @@ else:
                       report.write('<span class="datacritical">Server Error</span>')
                       summary['http5xx'] += 1
 
+#HTML
+
                 if service.has_key('http'):
                   if service['http'].has_key('html'):
                     if service['http']['html'] is not None:
@@ -455,18 +461,21 @@ else:
                             report.write('<span class="dataerror">Possible Key Leak (High Confidence)</span>')
                             report.write('<div class="data"><pre>\n')
                             summary['keyleaks'] += 1
-                          elif (
-                            (("api" in line.lower() and "key" in line.lower() and "=" in line) or ("authorization=" in line.lower())) and ("googleapis.com" not in line.lower())):
+                          elif ((("api" in line.lower() and "key" in line.lower() and "=" in line) or ("authorization=" in line.lower())) and ("googleapis.com" not in line.lower())):
                             report.write('</pre></dev>\n')
                             report.write('<span class="datawarning">Possible Key Leak (Low Confidence)</span>')
                             report.write('<div class="data"><pre>\n')
                             summary['keyleaks'] += 1
-                          if "form" in line.lower() and "action=" in line.lower():
+
+                          if "&ltform " in line.lower():
                             report.write('</pre></dev>\n')
                             report.write('<span class="datainfo">HTML Form</span>')
                             report.write('<div class="data"><pre>\n')
                             summary['htmlforms'] += 1
+
                       report.write('</pre></div>\n')
+
+#SSL
 
                 if service.has_key('ssl'):
                   if service['ssl'].has_key('cert'):
@@ -479,9 +488,13 @@ else:
                           if ip == pivottarget:
                             report.write('<span class="sslwarning">Pivot Target: %s</span>' % pivottarget)
                           else:
-                            report.write('<span class="sslerror">Pivot Target: %s</span>' % pivottarget)
-                            if pivottarget not in summary['sslpivottargets']:
-                              summary['sslpivottargets'].append(pivottarget)
+                            if ( 
+                              "cloudflaressl.com" not in pivottarget and
+                              "cloudfront.net" not in pivottarget
+                              ):
+                              report.write('<span class="sslerror">Pivot Target: %s</span>' % pivottarget)
+                              if pivottarget not in summary['sslpivottargets']:
+                                summary['sslpivottargets'].append(pivottarget)
                         if service['ssl']['cert']['subject']['CN'][0] == "*":
                           report.write('<span class="sslwarning">Wildcard</span>')
                           summary['sslwildcard'] += 1
@@ -518,6 +531,8 @@ else:
                       if cipher not in goodciphers:
                         report.write('<span class="sslerror">%s</span>' % (cipher, ))
                         summary['sslbadcipher'] += 1
+
+#Vulnerability Reporting
 
                 if service.has_key('vulns'):
                   report.write('<table class="vulnerability">\n')
