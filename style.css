@@ -9,6 +9,25 @@
     font:normal 60px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
+.domain {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 0px;
+    margin-right: auto;
+    border-collapse: collapse;
+    font:normal 11px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
+.domain tr {
+    border: 0px;
+    font:normal 20px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
+.domain td {
+    border: 0px;
+    font:normal 20px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
 .host {
     position: relative;
     left: 20px;
@@ -199,7 +218,7 @@
     color: orange;
 }
 
-table.vulnerability {
+.vulnerability {
     margin-top: 20px;
     margin-bottom: 20px;
     margin-left: 80px;
@@ -208,7 +227,13 @@ table.vulnerability {
     font:normal 11px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
-.tr, td {
+.vulnerability tr {
     border: 1px solid black;
     font:normal 11px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
+
+.vulnerability td {
+    border: 1px solid black;
+    font:normal 11px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+

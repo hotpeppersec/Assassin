@@ -21,6 +21,9 @@ summary = {
   "servicentp": 0,
   "serviceftp": 0,
   "servicemail": 0,
+  "servicejenkins": 0,
+  "servicephp": 0,
+  "serviceasp": 0,
   "serviceversions": 0,
   "serviceeol": 0,
   "serviceeos": 0,
@@ -51,6 +54,16 @@ summary = {
   "redirectpivottargets": [],
   "sslpivottargets": [],
 }
+
+def getDomainInfo(domain):
+  url = "https://rdap-pilot.verisignlabs.com/rdap/v1/domain/%s" % (domain, )
+  try:
+    jsonresponse = urllib2.urlopen(url)
+    response=json.loads(jsonresponse.read())
+    return response
+  except Exception as e:
+    print e
+    return False
 
 def getDnsht(domain):
   url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain, )
@@ -200,11 +213,13 @@ def getWhois(ip):
     response=json.loads(jsonresponse.read())
     if response.has_key("name"):
       return response['name']
+#    return response
   except Exception as e:
     print e
     return False
 
 domain = raw_input("What domain would you like to search? ")
+
 reportfile = "%s-detail.html" % (domain.split(".")[0], )
 report = open(reportfile, "w")
 report.write('<html>\n')
@@ -220,6 +235,56 @@ report.write('</style>\n')
 report.write('</head>\n')
 report.write('<body>\n')
 report.write('<div class="title">%s</div>\n' % (domain, ))
+
+#DOMAIN
+
+domaindata = getDomainInfo(domain)
+if domaindata:
+  clientDelete = True
+  clientTransfer = True
+  clientUpdate = True
+  if domaindata.has_key('status'):
+    statuses = domaindata['status']
+    if len(statuses) > 0:
+      if "client delete prohibited" in statuses:
+        clientDelete = False
+      if "client transfer prohibited" in statuses:
+        clientTransfer = False
+      if "client update prohibited" in statuses:
+        clientUpdate = False
+
+  report.write('<table class="domain" cellpadding="2" cellspacing="0" border="0">\n')
+
+  report.write('<tr class="domain"><td class="domain">Client Delete:</td>')
+  report.write('<td class="domain" align="center">')
+  if clientDelete:
+    report.write('<font color="red">Enabled</font>')
+  else:
+    report.write('<font color="green">Disabled</font>')
+  report.write('</td>')
+  report.write('</tr>\n')
+
+  report.write('<tr class="domain"><td class="domain">Client Transfer:</td>')
+  report.write('<td class="domain" align="center">')
+  if clientTransfer:
+    report.write('<font color="red">Enabled</font>')
+  else:
+    report.write('<font color="green">Disabled</font>')
+  report.write('</td>')
+  report.write('</tr>\n')
+
+  report.write('<tr class="domain"><td class="domain">Client Update:</td>')
+  report.write('<td class="domain" align="center">')
+  if clientUpdate:
+    report.write('<font color="red">Enabled</font>')
+  else:
+    report.write('<font color="green">Disabled</font>')
+  report.write('</td>')
+  report.write('</tr>\n')
+
+  report.write('</table>\n')
+
+#HOSTS
 
 dnsht = getDnsht(domain)
 dnsdb = getDnsdb(domain)
@@ -268,6 +333,8 @@ else:
             report.write('<span class="iperror">Reserved</span>')
         else:
 
+#REVERSE DNS
+
           reverse = getRevDns(ip)
           if reverse:
             cleanreverse = reverse.lower().rstrip('.')
@@ -300,6 +367,8 @@ else:
               if cleanreverse not in summary['reversednspivottargets']:
                 summary['reversednspivottargets'].append(cleanreverse)
 
+#WHOIS
+
           whois = getWhois(ip)
           if whois:
             report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
@@ -308,6 +377,8 @@ else:
             #report.write('<span class="iperror">BadTag</span>')
 
           #Add more IP checks here...
+
+#SHODAN
 
           shodan = getShodan(ip)
           if shodan:
@@ -379,6 +450,8 @@ else:
                     report.write('<span class="datainfo">WAF</span>')
                     summary['waf'] += 1
 
+#SSH
+
                   if (
                     "openssh" in service['data'].lower() or
                     (
@@ -393,16 +466,25 @@ else:
                     report.write('<span class="dataerror">SSH</span>')
                     summary['servicessh'] += 1
 
+#NTP
+
                   if "ntp" in service['data'].lower():
                     report.write('<span class="dataerror">NTP</span>')
                     summary['servicentp'] += 1
 
+#FTP
+
                   if (
                     "pure-ftpd" in service['data'].lower() or
-                    "serv-u ftp server" in service['data'].lower()
+                    "serv-u ftp server" in service['data'].lower() or
+                    "Red Hat FTP server ready." in service['data'] or
+                    "vsFTPd" in service['data'] or
+                    "Microsoft FTP Service" in service['data']
                     ):
                     report.write('<span class="datainfo">FTP</span>')
                     summary['serviceftp'] += 1
+
+#MAIL
 
                   if (
                     "dovecot" in service['data'].lower() or
@@ -413,9 +495,30 @@ else:
                     report.write('<span class="datainfo">Mail</span>')
                     summary['servicemail'] += 1
 
+#HTTP/1.0
+
                   if "HTTP/1.0" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
                     summary['http1'] += 1
                     report.write('<span class="dataerror">HTTP 1.0</span>')
+
+#JENKINS
+                  if "X-Jenkins: " in service['data'].encode('ascii', 'ignore'):
+                    report.write('<span class="datawarning">Jenkins</span>')
+                    summary['servicejenkins'] += 1
+
+#PHP
+
+                  if "X-Powered-By: PHP" in service['data'].encode('ascii', 'ignore'):
+                    report.write('<span class="datawarning">PHP</span>')
+                    summary['servicephp'] += 1
+
+#ASP
+
+                  if "X-Powered-By: ASP.NET" in service['data'].encode('ascii', 'ignore'):
+                    report.write('<span class="datawarning">ASP</span>')
+                    summary['serviceasp'] += 1
+
+#HTTP
 
                   if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
                     httpstatus = service['data'].encode('ascii', 'ignore').split('\n')[0].split(' ')[1]
@@ -456,16 +559,18 @@ else:
                       for line in htmllines:
                         if len(line.strip().rstrip("\n")) > 0:
                           report.write("%s\n" % (line.encode('ascii', 'ignore').replace("<", "&lt").replace(">", "&gt"), ))
-                          if ("&key=" in line.lower() or "apikey" in line.lower()) and ("googleapis.com" not in line.lower()):
+                          if ("&key=" in line.lower() or "\"apikey\":" in line.lower()) and ("googleapis.com" not in line.lower()):
                             report.write('</pre></dev>\n')
                             report.write('<span class="dataerror">Possible Key Leak (High Confidence)</span>')
                             report.write('<div class="data"><pre>\n')
                             summary['keyleaks'] += 1
-                          elif ((("api" in line.lower() and "key" in line.lower() and "=" in line) or ("authorization=" in line.lower())) and ("googleapis.com" not in line.lower())):
+                          elif ((("api" in line.lower() and "key=" in line.lower()) or ("authorization=" in line.lower())) and ("googleapis.com" not in line.lower())):
                             report.write('</pre></dev>\n')
                             report.write('<span class="datawarning">Possible Key Leak (Low Confidence)</span>')
                             report.write('<div class="data"><pre>\n')
                             summary['keyleaks'] += 1
+
+#HTML FORMS
 
                           if "&ltform " in line.lower():
                             report.write('</pre></dev>\n')
@@ -475,9 +580,19 @@ else:
 
                       report.write('</pre></div>\n')
 
+#ROBOTS
+
+                  if service['http'].has_key('robots'):
+                    robots = service['http']['robots']
+                    if robots is not None:
+                      report.write('<div class="data"><pre>\n')
+                      report.write(robots)
+                      report.write('</pre></div>\n')
+
 #SSL
 
                 if service.has_key('ssl'):
+#                  print service['ssl']
                   if service['ssl'].has_key('cert'):
                     if service['ssl']['cert'].has_key('subject'):
                       if service['ssl']['cert']['subject'].has_key('CN'):
@@ -532,22 +647,22 @@ else:
                         report.write('<span class="sslerror">%s</span>' % (cipher, ))
                         summary['sslbadcipher'] += 1
 
-#Vulnerability Reporting
+#VULN
 
                 if service.has_key('vulns'):
                   report.write('<table class="vulnerability">\n')
                   report.write("<tr>")
-                  report.write('<td align="center" width="150px">CVE</td>')
-                  report.write('<td align="center" width="150px">CVSS</td>')
-                  report.write('<td align="center">Summary</td>')
+                  report.write('<td class="vulnerability" align="center" width="150px">CVE</td>')
+                  report.write('<td class="vulnerability" align="center" width="150px">CVSS</td>')
+                  report.write('<td class="vulnerability" align="center">Summary</td>')
                   report.write("</tr>\n")
                   vulns = service['vulns']
 		  for vuln in vulns:
                     summary['vulntotal'] += 1
                     if vulns[vuln].has_key('cvss') and vulns[vuln].has_key('summary'):
-                      report.write("<tr>")
-                      report.write('<td align="center">%s</td>' % (vuln, ))
-                      report.write('<td align="center"')
+                      report.write('<tr class="vulnerability">')
+                      report.write('<td class="vulnerability" align="center">%s</td>' % (vuln, ))
+                      report.write('<td class="vulnerability" align="center"')
                       cvss = vulns[vuln]['cvss']
                       if 0.1 <= float(cvss) < 4:
                         report.write(' bgcolor="yellow"')
@@ -562,7 +677,7 @@ else:
                         report.write(' bgcolor="purple"')
                         summary['vulncritical'] += 1
                       report.write('>%s</td>' % (cvss, ))
-                      report.write("<td>%s</td>" % (vulns[vuln]['summary'], ))
+                      report.write('<td class="vulnerability">%s</td>' % (vulns[vuln]['summary'], ))
                       report.write("</tr>\n")
                   report.write("</table>")
  
@@ -633,11 +748,14 @@ sum.write("SSH Services: %s<br>\n" % (summary['servicessh'], ))
 sum.write("FTP Services: %s<br>\n" % (summary['serviceftp'], ))
 sum.write("NTP Services: %s<br>\n" % (summary['servicentp'], ))
 sum.write("Mail Services: %s<br>\n" % (summary['servicemail'], ))
+sum.write("Jenkins Services: %s<br>\n" % (summary['servicejenkins'], ))
 
 sum.write("<br>HTTP Hardening<br>\n")
 sum.write("Web services protected by a WAF: %s<br>\n" % (summary['waf'], ))
 sum.write("Web services that respond to HTTP/1.0 requests: %s<br>\n" % (summary['http1'], ))
 sum.write("Web services that identify their version: %s<br>\n" % (summary['serviceversions'], ))
+sum.write("Web Services Utilizing PHP: %s<br>\n" % (summary['servicephp'], ))
+sum.write("Web Services Utilizing ASP: %s<br>\n" % (summary['servicephp'], ))
 sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
 sum.write("HTML Forms Detected: %s<br>\n" % (summary['htmlforms'], ))
 sum.write("Possible API Key Leaks Detected: %s<br>\n" % (summary['keyleaks'], ))
