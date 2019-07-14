@@ -298,7 +298,11 @@ if domaindata:
             report.write('<td class="domain">Last Changed:</td>')
           elif event['eventAction'] == "expiration":
             report.write('<td class="domain">Expiration:</td>')
-          report.write('<td class="domain">%s</td>' % (event['eventDate'].split('T')[0],))
+          datedata = event['eventDate'].split('T')[0]
+          eventyear = datedata.split('-')[0]
+          eventmonth = datedata.split('-')[1]
+          eventday = datedata.split('-')[2]
+          report.write('<td class="domain">%s/%s/%s</td>' % (eventmonth, eventday, eventyear))
           report.write('</tr>\n')
   report.write('</table>\n')
 
@@ -426,9 +430,6 @@ else:
                     if tag == "starttls":
                       summary['starttlsservices'] += 1
                       report.write('<span class="servicewarning">%s</span>' % (tag, ))
-                    if tag == "self-signed":
-                      summary['selfsignedservices'] += 1
-                      report.write('<span class="serviceerror">%s</span>' % (tag, ))
 
                 if service.has_key('data'):
                   report.write('<div class="data"><pre>\n')
@@ -613,12 +614,25 @@ else:
                 if service.has_key('ssl'):
 #                  report.write('%s<br>\n' % (service['ssl'], ))
                   if service['ssl'].has_key('cert'):
+
+#SSL SUBJECT
+
                     if service['ssl']['cert'].has_key('subject'):
-                      if service['ssl']['cert']['subject'].has_key('CN'):
-                        report.write('<div class="ssl">SSL Certificate Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
-                        if domain not in service['ssl']['cert']['subject']['CN'].lower():
+                      report.write('<div class="ssl">SSL Subject</div>\n')
+                      report.write('<div class="ssldata">\n')
+                      subject = service['ssl']['cert']['subject']
+                      if subject.has_key('OU'):
+                        report.write('OU: %s<br>\n' % (subject['OU'], ))
+                      if subject.has_key('emailAddress'):
+                        report.write('Email: %s<br>\n' % (subject['emailAddress'], ))
+                      if subject.has_key('O'):
+                        report.write('O: %s<br>\n' % (subject['O'], ))
+                      if subject.has_key('CN'):
+                        report.write('CN: %s<br>\n' % (subject['CN'], ))
+                        report.write('</div>\n')
+                        if domain not in subject['CN'].lower():
                           summary['sslnotdomain'] += 1
-                          pivottarget = service['ssl']['cert']['subject']['CN'].lower().lstrip('*.').rstrip('/').replace('www.', '')
+                          pivottarget = subject['CN'].lower().lstrip('*.').rstrip('/').replace('www.', '')
                           if ip == pivottarget:
                             report.write('<span class="sslwarning">Pivot Target: %s</span>' % pivottarget)
                           else:
@@ -636,10 +650,39 @@ else:
                           report.write('<span class="sslwarning">Wildcard</span>')
                           summary['sslwildcard'] += 1
 
+#SSL SELF-SIGNED
+
+                    if service['ssl']['cert'].has_key('issuer') and service['ssl']['cert'].has_key('subject'):
+                      subject = service['ssl']['cert']['subject']
+                      issuer = service['ssl']['cert']['issuer']
+                      if subject and issuer:
+                        if subject == issuer:
+                          report.write('<span class="sslerror">Self-Signed</span>')
+                          summary['selfsignedservices'] += 1
+
+#SSL ISSUER
+
+                    if service['ssl']['cert'].has_key('issuer'):
+                      report.write('<div class="ssl">SSL Issuer</div>\n')
+                      report.write('<div class="ssldata">\n')
+                      issuer = service['ssl']['cert']['issuer']
+                      if issuer.has_key('OU'):
+                        report.write('OU: %s<br>\n' % (issuer['OU'], ))
+                      if issuer.has_key('emailAddress'):
+                        report.write('Email: %s<br>\n' % (issuer['emailAddress'], ))
+                      if issuer.has_key('O'):
+                        report.write('O: %s<br>\n' % (issuer['O'], ))
+                      if issuer.has_key('CN'):
+                        report.write('CN: %s<br>\n' % (issuer['CN'], ))
+                      report.write('</div>\n')
+
 #SSL CERT EXPIRATION
 
                     if service['ssl']['cert'].has_key('expires'):
-                      report.write('<div class="ssl">SSL Certificate Expiration: %s</div>' % (service['ssl']['cert']['expires'], ))
+                      certyear = service['ssl']['cert']['expires'][0:4]
+                      certmonth = service['ssl']['cert']['expires'][4:6]
+                      certday = service['ssl']['cert']['expires'][6:8]
+                      report.write('<div class="ssl">SSL Certificate Expiration: %s/%s/%s</div>' % (certmonth, certday, certyear))
 
                     if service['ssl']['cert'].has_key('expired'):
                       if service['ssl']['cert']['expired']:
@@ -649,7 +692,8 @@ else:
 #SSL VERSIONS
 
                   if service['ssl'].has_key('versions'):
-                    report.write('<div class="ssl">SSL Versions:<br>\n')
+                    report.write('<div class="ssl">SSL Versions</div>\n')
+                    report.write('<div class="ssldata">\n')
                     for version in service['ssl']['versions']:
                       report.write('%s<br>\n' % (version, ))
                     report.write('</div>\n')
@@ -680,8 +724,23 @@ else:
 
                     if service['ssl']['cipher'].has_key('name'):
                       cipher = service['ssl']['cipher']['name']
+                      report.write('<div class="ssl">SSL Cipher</div>\n')
+                      report.write('<div class="ssldata">\n')
+                      report.write('Cipher Suite: %s<br>\n' % (cipher, ))
+                      cipherparts = cipher.split('-')
+                      if len(cipherparts) == 5:
+                        report.write('Key Exchange: %s<br>\n' % (cipherparts[0], ))
+                        report.write('Authentication: %s<br>\n' % (cipherparts[1], ))
+                        report.write('Block/Stream Ciphers: %s-%s<br>\n' % (cipherparts[2], cipherparts[3]))
+                        report.write('Message Authentication: %s<br>\n' % (cipherparts[4], ))
+                      elif len(cipherparts) == 4:
+                        report.write('Key Exchange: %s<br>\n' % (cipherparts[0], ))
+                        report.write('Authentication: %s<br>\n' % (cipherparts[1], ))
+                        report.write('Block/Stream Ciphers: %s<br>\n' % (cipherparts[2], ))
+                        report.write('Message Authentication: %s<br>\n' % (cipherparts[3], ))
+                      report.write('</div>\n')
                       if cipher not in goodciphers:
-                        report.write('<span class="sslerror">%s</span>' % (cipher, ))
+                        report.write('<span class="sslwarning">Less Secure Cipher</span>')
                         summary['sslbadcipher'] += 1
 
 #VULN

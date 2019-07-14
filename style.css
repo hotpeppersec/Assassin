@@ -198,9 +198,16 @@
     font:normal 14px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
 }
 
+.ssldata {
+    position: relative;
+    padding: 3px;
+    left: 100px;
+    font:normal 12px "Nimbus Sans Cond", tahoma, helvetica, arial, sans-serif;
+}
+
 .sslerror {
     position: relative;
-    left: 80px;
+    left: 100px;
     padding: 2px;
     border: 2px solid red;
     border-radius: 7px;
@@ -210,7 +217,7 @@
 
 .sslwarning {
     position: relative;
-    left: 80px;
+    left: 100px;
     padding: 2px;
     border: 2px solid orange;
     border-radius: 7px;
