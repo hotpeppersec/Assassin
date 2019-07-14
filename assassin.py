@@ -324,12 +324,13 @@ else:
       "demo" in host.lower() or
       "qa" in host.lower() or
       "test" in host.lower() or
-      ("dev" in host.lower() and "device" not in host.lower()) or
+      ("dev" in host.lower() and "device" not in host.lower() and "developers" not in host.lower()) or
       "beta" in host.lower() or
       "preprod" in host.lower() or
       "uat" in host.lower() or
       "staging" in host.lower() or
       "poc" in host.lower() or
+      "nonprod" in host.lower() or
       ("stage" in host.lower() or "staging" in host.lower())
       ):
       report.write('<span class="hostwarn">Possible non-production system</span>')
