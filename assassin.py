@@ -240,6 +240,9 @@ report.write('<div class="title">%s</div>\n' % (domain, ))
 
 domaindata = getDomainInfo(domain)
 if domaindata:
+
+#DOMAIN TRANSFER
+
   clientDelete = True
   clientTransfer = True
   clientUpdate = True
@@ -282,6 +285,21 @@ if domaindata:
   report.write('</td>')
   report.write('</tr>\n')
 
+#DOMAIN EXPIRATION
+
+  if domaindata.has_key('events'):
+    if len(domaindata['events']) > 0:
+      for event in domaindata['events']:
+        if event.has_key('eventAction') and event.has_key('eventDate'):
+          report.write('<tr class="domain">')
+          if event['eventAction'] == "registration":
+            report.write('<td class="domain">Registration:</td>')
+          elif event['eventAction'] == "last changed":
+            report.write('<td class="domain">Last Changed:</td>')
+          elif event['eventAction'] == "expiration":
+            report.write('<td class="domain">Expiration:</td>')
+          report.write('<td class="domain">%s</td>' % (event['eventDate'].split('T')[0],))
+          report.write('</tr>\n')
   report.write('</table>\n')
 
 #HOSTS
@@ -300,7 +318,7 @@ else:
     print "Processing host: %s" % (host)
     report.write('<div class="host">%s</div>\n' % (host, ))
 
-#NonProd
+#NONPROD
 
     if (
       "demo" in host.lower() or
@@ -592,11 +610,11 @@ else:
 #SSL
 
                 if service.has_key('ssl'):
-#                  print service['ssl']
+#                  report.write('%s<br>\n' % (service['ssl'], ))
                   if service['ssl'].has_key('cert'):
                     if service['ssl']['cert'].has_key('subject'):
                       if service['ssl']['cert']['subject'].has_key('CN'):
-                        report.write('<div class="ssl">SSL Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
+                        report.write('<div class="ssl">SSL Certificate Subject: %s</div>' % (service['ssl']['cert']['subject']['CN'], ))
                         if domain not in service['ssl']['cert']['subject']['CN'].lower():
                           summary['sslnotdomain'] += 1
                           pivottarget = service['ssl']['cert']['subject']['CN'].lower().lstrip('*.').rstrip('/').replace('www.', '')
@@ -610,15 +628,30 @@ else:
                               report.write('<span class="sslerror">Pivot Target: %s</span>' % pivottarget)
                               if pivottarget not in summary['sslpivottargets']:
                                 summary['sslpivottargets'].append(pivottarget)
+
+#SSL WILDCARD
+
                         if service['ssl']['cert']['subject']['CN'][0] == "*":
                           report.write('<span class="sslwarning">Wildcard</span>')
                           summary['sslwildcard'] += 1
+
+#SSL CERT EXPIRATION
+
+                    if service['ssl']['cert'].has_key('expires'):
+                      report.write('<div class="ssl">SSL Certificate Expiration: %s</div>' % (service['ssl']['cert']['expires'], ))
+
                     if service['ssl']['cert'].has_key('expired'):
                       if service['ssl']['cert']['expired']:
                         report.write('<span class="sslerror">Expired</span>')
                         summary['sslexpired'] += 1
 
+#SSL VERSIONS
+
                   if service['ssl'].has_key('versions'):
+                    report.write('<div class="ssl">SSL Versions:<br>\n')
+                    for version in service['ssl']['versions']:
+                      report.write('%s<br>\n' % (version, ))
+                    report.write('</div>\n')
                     errorversions = ['TLSv1', 'SSLv2', 'SSLv3']
                     warnversions = ['TLSv1.1']
                     for version in service['ssl']['versions']:
@@ -628,6 +661,9 @@ else:
                       elif version in warnversions:
                         report.write('<span class="sslwarning">%s</span>' % (version, ))
                         summary['sslwarnversion'] += 1
+
+#SSL CIPHERS
+
                   if service['ssl'].has_key('cipher'):
                     goodciphers = []
                     goodciphers.append('ECDHE-ECDSA-AES256-GCM-SHA384')
