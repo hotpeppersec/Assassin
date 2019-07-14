@@ -605,9 +605,11 @@ else:
                   if service['http'].has_key('robots'):
                     robots = service['http']['robots']
                     if robots is not None:
-                      report.write('<div class="data"><pre>\n')
-                      report.write(robots)
-                      report.write('</pre></div>\n')
+                      if len(robots.encode('ascii', 'ignore').strip()) > 0:
+                        report.write('<div class="ssl">Robots</div>\n')
+                        report.write('<div class="ssldata"><pre>\n')
+                        report.write(robots)
+                        report.write('</pre></div>\n')
 
 #SSL
 
@@ -622,17 +624,17 @@ else:
                       report.write('<div class="ssldata">\n')
                       subject = service['ssl']['cert']['subject']
                       if subject.has_key('OU'):
-                        report.write('OU: %s<br>\n' % (subject['OU'], ))
+                        report.write('OU: %s<br>\n' % (subject['OU'].encode('ascii', 'ignore'), ))
                       if subject.has_key('emailAddress'):
-                        report.write('Email: %s<br>\n' % (subject['emailAddress'], ))
+                        report.write('Email: %s<br>\n' % (subject['emailAddress'].encode('ascii', 'ignore'), ))
                       if subject.has_key('O'):
-                        report.write('O: %s<br>\n' % (subject['O'], ))
+                        report.write('O: %s<br>\n' % (subject['O'].encode('ascii', 'ignore'), ))
                       if subject.has_key('CN'):
-                        report.write('CN: %s<br>\n' % (subject['CN'], ))
+                        report.write('CN: %s<br>\n' % (subject['CN'].encode('ascii', 'ignore'), ))
                         report.write('</div>\n')
                         if domain not in subject['CN'].lower():
                           summary['sslnotdomain'] += 1
-                          pivottarget = subject['CN'].lower().lstrip('*.').rstrip('/').replace('www.', '')
+                          pivottarget = subject['CN'].encode('ascii', 'ignore').lower().lstrip('*.').rstrip('/').replace('www.', '')
                           if ip == pivottarget:
                             report.write('<span class="sslwarning">Pivot Target: %s</span>' % pivottarget)
                           else:
@@ -667,21 +669,22 @@ else:
                       report.write('<div class="ssldata">\n')
                       issuer = service['ssl']['cert']['issuer']
                       if issuer.has_key('OU'):
-                        report.write('OU: %s<br>\n' % (issuer['OU'], ))
+                        report.write('OU: %s<br>\n' % (issuer['OU'].encode('ascii', 'ignore'), ))
                       if issuer.has_key('emailAddress'):
-                        report.write('Email: %s<br>\n' % (issuer['emailAddress'], ))
+                        report.write('Email: %s<br>\n' % (issuer['emailAddress'].encode('ascii', 'ignore'), ))
                       if issuer.has_key('O'):
-                        report.write('O: %s<br>\n' % (issuer['O'], ))
+                        report.write('O: %s<br>\n' % (issuer['O'].encode('ascii', 'ignore'), ))
                       if issuer.has_key('CN'):
-                        report.write('CN: %s<br>\n' % (issuer['CN'], ))
+                        report.write('CN: %s<br>\n' % (issuer['CN'].encode('ascii', 'ignore'), ))
                       report.write('</div>\n')
 
 #SSL CERT EXPIRATION
 
                     if service['ssl']['cert'].has_key('expires'):
-                      certyear = service['ssl']['cert']['expires'][0:4]
-                      certmonth = service['ssl']['cert']['expires'][4:6]
-                      certday = service['ssl']['cert']['expires'][6:8]
+                      expires = service['ssl']['cert']['expires'].encode('ascii', 'ignore')
+                      certyear = expires[0:4]
+                      certmonth = expires[4:6]
+                      certday = expires[6:8]
                       report.write('<div class="ssl">SSL Certificate Expiration: %s/%s/%s</div>' % (certmonth, certday, certyear))
 
                     if service['ssl']['cert'].has_key('expired'):
@@ -694,18 +697,18 @@ else:
                   if service['ssl'].has_key('versions'):
                     report.write('<div class="ssl">SSL Versions</div>\n')
                     report.write('<div class="ssldata">\n')
-                    for version in service['ssl']['versions']:
-                      report.write('%s<br>\n' % (version, ))
-                    report.write('</div>\n')
                     errorversions = ['TLSv1', 'SSLv2', 'SSLv3']
                     warnversions = ['TLSv1.1']
                     for version in service['ssl']['versions']:
-                      if version in errorversions:
-                        report.write('<span class="sslerror">%s</span>' % (version, ))
+                      if version.strip() in errorversions:
+                        report.write('<font color="red">%s</font><br>\n' % (version, ))
                         summary['sslerrorversion'] += 1
-                      elif version in warnversions:
-                        report.write('<span class="sslwarning">%s</span>' % (version, ))
+                      elif version.strip() in warnversions:
+                        report.write('<font color="orange">%s</font><br>\n' % (version, ))
                         summary['sslwarnversion'] += 1
+                      else:
+                        report.write('%s<br>\n' % (version, ))
+                    report.write('</div>\n')
 
 #SSL CIPHERS
 
