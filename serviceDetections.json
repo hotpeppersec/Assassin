@@ -155,7 +155,7 @@
         {
           "name": "Apache",
           "type": "service",
-          "severity": "warn",
+          "severity": "info",
           "description": "There is an Apache web server exposed to the Internet.",
           "recommendations": []
         }
