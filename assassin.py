@@ -94,7 +94,6 @@ def getDnsdb(domain):
   try:
     output = []
     response = urllib2.urlopen(request)
-    print response
     for result in response.read().split("\n"):
       if (result.strip() != "" and result[0] != ";"):
         fields = result.split(" ")
@@ -114,7 +113,11 @@ def getVtdomain(domain):
   try:
     jsonresponse = urllib2.urlopen(url)
     response = json.loads(jsonresponse.read())
+#    print response
     print "Received %s hosts from VirusTotal" % (len(response['subdomains']), )
+    print "Verdict: %s" % (response['Webutation domain info']['Verdict'], )
+    print "Adult Content: %s" % (response['Webutation domain info']['Adult content'], )
+    print "Safety Score: %s" % (response['Webutation domain info']['Safety score'], )
     return response['subdomains']
   except:
     return False
@@ -234,6 +237,7 @@ style.close()
 report.write('</style>\n')
 report.write('</head>\n')
 report.write('<body>\n')
+report.write('<img src="Assassin.png" width="500px"><br>\n')
 report.write('<div class="title">%s</div>\n' % (domain, ))
 
 #DOMAIN
@@ -396,9 +400,6 @@ else:
           if whois:
             report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
 
-          #if someCheck(ip):
-            #report.write('<span class="iperror">BadTag</span>')
-
           #Add more IP checks here...
 
 #SHODAN
@@ -415,6 +416,7 @@ else:
 
               for service in shodan['data']:
                 summary['services'] += 1
+
                 report.write('<div class="service">\n')
                 if service.has_key('transport') and service.has_key('port') and service.has_key('product'):
                   report.write("Service: %s/%s - %s\n" % (service['transport'], service['port'], service['product']))
@@ -422,87 +424,46 @@ else:
                   report.write("Service: %s/%s\n" % (service['transport'], service['port']))
                 report.write('</div>\n')
 
+#LOAD SERVICE SIGNATURES
+
+                detectjson = open("serviceDetections.json", "r")
+                detectdata=json.load(detectjson)
+                detects = detectdata['service detections']
+
+                servicetags = []
+
                 if service.has_key('tags'):
                   for tag in service['tags']:
                     if tag == "cloud":
+                      servicetags.append({"severity": "info", "name": "cloud", "type": "service", "description": "This service is hosted in a cloud service provider.", "recommendations": [], "matches": []})
                       summary['cloudservices'] += 1
-                      report.write('<span class="serviceinfo">%s</span>' % (tag, ))
                     if tag == "starttls":
                       summary['starttlsservices'] += 1
-                      report.write('<span class="servicewarning">%s</span>' % (tag, ))
+                      servicetags.append({"severity": "warn", "name": "starttls", "type": "hardening", "description": "This service is potentially vulnerable to a startTLS attack.", "recommendations": [], "matches": []})
 
                 if service.has_key('data'):
                   report.write('<div class="data"><pre>\n')
                   report.write(service['data'].encode('ascii', 'ignore').strip().replace("<", "&lt").replace(">", "&gt"))
-                  report.write('</pre></div>\n')
+                  report.write('\n</pre></div>\n')
+
+
+#DETECT SERVICES
 
                   for line in service['data'].encode('ascii', 'ignore').split('\n'):
-                    if "Server:" in line:
-                      server = line.split(" ")[1]
-                      serverparts = server.split("/")
-                      if len(serverparts) > 1:
-                        if "awselb/2.0" not in server:
-                          report.write('<span class="dataerror">Service identified as %s</span>' % (server, ))
-                          summary['serviceversions'] += 1
+                    for detect in detects:
+                      for signature in detect['signatures']:
+                        if signature in line:
+                          for tag in detect['tags']:
+                            candidate = {"name": tag['name'], "severity": tag['severity'], "type": tag['type'], "description": tag['description'], "recommendations": tag['recommendations'], "matches": [line.strip()]}
+                            tagfound = False
+                            for servicetag in servicetags:
+                              if candidate['name'] == servicetag['name']:
+                                servicetag['matches'].append(line.strip())
+                                tagfound = True
+                            if not tagfound:
+                              servicetags.append(candidate)
 
-                      if "awselb/2.0" not in server:
-
-                        if (
-                          "Apache/2.2." in server
-                          ):
-                          report.write('<span class="dataerror">End of Life</span>')
-                          summary['serviceeol'] += 1
-
-                        if (
-                          "Microsoft-IIS/7.5" in server
-                          ):
-                          report.write('<span class="dataerror">End of Mainstream Support</span>')
-                          summary['serviceeos'] += 1
-
-#WAF
-
-                  if ("Server: cloudflare" in service['data'] or
-                    "CloudFront" in service['data'] or
-                    "cloudfront" in service['data'] or
-                    "BigIP" in service['data'] or
-                    "bigip" in service['data'] or
-                    "BIGip" in service['data']):
-                    report.write('<span class="datainfo">WAF</span>')
-                    summary['waf'] += 1
-
-#SSH
-
-                  if (
-                    "openssh" in service['data'].lower() or
-                    (
-                      "key type: " in service['data'].lower() and
-                      "kex algorithms:" in service['data'].lower() and
-                      "server host key algorithms:" in service['data'].lower() and
-                      "encryption algorithms:" in service['data'].lower() and
-                      "mac algorithms:" in service['data'].lower() and
-                      "compression algorithms:" in service['data'].lower()
-                      )
-                    ):
-                    report.write('<span class="dataerror">SSH</span>')
-                    summary['servicessh'] += 1
-
-#NTP
-
-                  if "ntp" in service['data'].lower():
-                    report.write('<span class="dataerror">NTP</span>')
-                    summary['servicentp'] += 1
-
-#FTP
-
-                  if (
-                    "pure-ftpd" in service['data'].lower() or
-                    "serv-u ftp server" in service['data'].lower() or
-                    "Red Hat FTP server ready." in service['data'] or
-                    "vsFTPd" in service['data'] or
-                    "Microsoft FTP Service" in service['data']
-                    ):
-                    report.write('<span class="datainfo">FTP</span>')
-                    summary['serviceftp'] += 1
+#OBSOLETE DETECTIONS THAT NEED TO BE RE-WRITTEN
 
 #MAIL
 
@@ -515,36 +476,10 @@ else:
                     report.write('<span class="datainfo">Mail</span>')
                     summary['servicemail'] += 1
 
-#HTTP/1.0
-
-                  if "HTTP/1.0" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
-                    summary['http1'] += 1
-                    report.write('<span class="dataerror">HTTP 1.0</span>')
-
-#JENKINS
-                  if "X-Jenkins: " in service['data'].encode('ascii', 'ignore'):
-                    report.write('<span class="datawarning">Jenkins</span>')
-                    summary['servicejenkins'] += 1
-
-#PHP
-
-                  if "X-Powered-By: PHP" in service['data'].encode('ascii', 'ignore'):
-                    report.write('<span class="datawarning">PHP</span>')
-                    summary['servicephp'] += 1
-
-#ASP
-
-                  if "X-Powered-By: ASP.NET" in service['data'].encode('ascii', 'ignore'):
-                    report.write('<span class="datawarning">ASP</span>')
-                    summary['serviceasp'] += 1
-
 #HTTP
 
                   if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
                     httpstatus = service['data'].encode('ascii', 'ignore').split('\n')[0].split(' ')[1]
-                    if httpstatus == "200":
-                      report.write('<span class="datawarning">Valid Response with IP Scan</span>')
-                      summary['http200'] += 1
                     if httpstatus[0] == "3":
                       summary['http3xx'] += 1
                       for line in service['data'].split("\n"):
@@ -565,9 +500,24 @@ else:
                             else:
                               report.write('<span class="datawarning">Redirect to different IP/host in the domain</span>')
                               summary['redirectdifferentiphost'] += 1
-                    if httpstatus[0] == "5":
-                      report.write('<span class="datacritical">Server Error</span>')
-                      summary['http5xx'] += 1
+#DISPLAY HEADER TAGS
+
+                for tag in servicetags:
+                  if tag['severity'] == "info":
+                    report.write('<span class="datainfo">%s</span>\n' % (tag['name'], ))
+                  if tag['severity'] == "warn":
+                    report.write('<span class="datawarning">%s</span>\n' % (tag['name'], ))
+                  if tag['severity'] == "error":
+                    report.write('<span class="dataerror">%s</span>\n' % (tag['name'], ))
+                  if tag['severity'] == "critical":
+                    report.write('<span class="datacritical">%s</span>\n' % (tag['name'], ))
+                  report.write('<div class="tagdata">\n')
+                  for match in tag['matches']:
+                    report.write('Match: %s<br>\n' % (match, ))
+                  report.write('Description: %s<br>\n' % (tag['description'], ))
+                  for recommendation in tag['recommendations']:
+                    report.write('Recommendation: %s<br>\n' % (recommendation, ))
+                  report.write('</div>\n')
 
 #HTML
 
@@ -607,9 +557,10 @@ else:
                     if robots is not None:
                       if len(robots.encode('ascii', 'ignore').strip()) > 0:
                         report.write('<div class="ssl">Robots</div>\n')
-                        report.write('<div class="ssldata"><pre>\n')
-                        report.write(robots)
-                        report.write('</pre></div>\n')
+                        report.write('<div class="ssldata">\n')
+                        for robotline in robots.split('\n'):
+                          report.write('%s<br>\n' % (robotline.strip().encode('ascii', 'ignore'), ))
+                        report.write('</div>\n')
 
 #SSL
 
@@ -697,14 +648,18 @@ else:
                   if service['ssl'].has_key('versions'):
                     report.write('<div class="ssl">SSL Versions</div>\n')
                     report.write('<div class="ssldata">\n')
-                    errorversions = ['TLSv1', 'SSLv2', 'SSLv3']
+                    errorversions = ['TLSv1', 'SSLv2', 'SSLv3', '-TLSv1.2']
                     warnversions = ['TLSv1.1']
                     for version in service['ssl']['versions']:
                       if version.strip() in errorversions:
-                        report.write('<font color="red">%s</font><br>\n' % (version, ))
+                        report.write('</div>\n')
+                        report.write('<span class="sslerror">%s</span>\n' % (version, ))
+                        report.write('<div class="ssldata">\n')
                         summary['sslerrorversion'] += 1
                       elif version.strip() in warnversions:
-                        report.write('<font color="orange">%s</font><br>\n' % (version, ))
+                        report.write('</div>\n')
+                        report.write('<span class="sslwarning">%s</span>\n' % (version, ))
+                        report.write('<div class="ssldata">\n')
                         summary['sslwarnversion'] += 1
                       else:
                         report.write('%s<br>\n' % (version, ))

@@ -1,0 +1,519 @@
+{
+  "service detections": [
+    {
+      "signatures": ["HTTP/1.0"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "HTTP Version 1.0",
+          "type": "hardening",
+          "severity": "error",
+          "description": "Exposing and responding to HTTP version 1.0 is generally considered to be a misconfiguration of the web server.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["HTTP/1.1 200 OK"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Response to IP scan",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "When exposing a web service to the Internet, you should require the end-user's web browser to request content from the hosted site before giving a valid response.  Though a valid end-user would not notice this requirement since their web browser will already do this by default, it will essentially remove you from common attacker discovery tools such as Shodan as well as methodologies such as port scanning.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": [
+        "HTTP/1.0 5",
+        "HTTP/1.1 5"
+        ],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "HTTP server error",
+          "type": "hardening",
+          "severity": "error",
+          "description": "Exposing web sites that display errors on the default site could make you more interesting to a potential attacker.  Errors such as this may indicate a forgotten or improperly maintained site which can be easily broken.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Microsoft-IIS"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Microsoft IIS",
+          "type": "service",
+          "severity": "info",
+          "description": "There is a Microsoft IIS server exposed to the Internet.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Microsoft-IIS/6.0"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: IIS/6.0", 
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
+        },
+        {
+          "name": "End of Life",
+          "type": "maintenance",
+          "severity": "error",
+          "description": "Microsoft IIS version 6.0 is no longer supported by Microsoft.",
+          "recommendations": ["Upgrade to a supported version of IIS (and underlying server operating system) as soon as possible."]
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Microsoft-IIS/7.5"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: IIS/7.5",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
+        },
+        {
+          "name": "End of Mainstream Support",
+          "type": "maintenance",
+          "severity": "error",
+          "description": "Microsoft ISS version 7.5 is no longer supported by Microsoft with regular patches and updates.",
+          "recommendations": ["Upgrade to a supported version of IIS (and underlying server operating system) as soon as possible."]
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Microsoft-IIS/8.0"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: IIS/8.0",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Microsoft-IIS/8.5"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: IIS/8.5",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Microsoft-IIS/10.0"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: IIS/10.0",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Microsoft-HTTPAPI/2.0"],
+      "exceptions": [],
+      "severity": "warn",
+      "tags": [
+        {
+          "name": "Server Tokens: HTTPAPI 2.0",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Apache"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Apache",
+          "type": "service",
+          "severity": "warn",
+          "description": "There is an Apache web server exposed to the Internet.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Apache/2.2."],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: Apache/2.2",
+          "type": "hardening",
+          "severity": "error",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": []
+        },
+        {
+          "name": "End of Life",
+          "type": "maintenance",
+          "severity": "error",
+          "description": "Apache version 2.2 is no longer supported by the Apache Software Foundation.",
+          "recommendations": ["Upgrade to a supported version of the Apache HTTPD service."]
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Apache/2.4."],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: Apache/2.4",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: nginx"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "nginx",
+          "type": "hardening",
+          "severity": "info",
+          "description": "There is an nginx web service exposed to the Internet.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: nginx/1."],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: nginx/1",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Apache-Coyote/1.1"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Service Tokens: Apache Tomcat",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Jetty("],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Service Tokens: Eclipse Jetty",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": [
+        "awselb/2.0",
+        "Set-Cookie: AWSELB="
+        ],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "AWS Elastic Load Balancer (ELB)",
+          "type": "service",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Set-Cookie: AWSALB="],
+      "exceptions": "",
+      "tags": [
+        {
+          "name": "AWS Application Load Balancer (ALB)",
+          "type": "service",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: AmazonS3"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "AWS Simple Storage Service (S3)",
+          "type": "service",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": [
+        "Server: CloudFront",
+        "X-Amz-Cf-Pop: ",
+        "X-Amz-Cf-Id: ",
+        "X-Cache: Hit from cloudfront",
+        "X-Cache: Miss from cloudfront",
+        "X-Cache: Error from cloudfront",
+        "X-Cache: Redirect from cloudfront",
+        ".cloudfront.net (CloudFront)"
+        ],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "CloudFront",
+          "type": "waf",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": [
+        "Server: BigIP",
+        "Set-Cookie: BIGipServer"
+        ],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "BigIP",
+          "type": "waf",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: cloudflare"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Cloudflare",
+          "type": "waf",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: AkamaiGHost"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Akamai",
+          "type": "waf",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": [
+        "X-AspNet-Version: ",
+        "X-Powered-By: ASP.NET",
+        "Set-Cookie: ASP.NET_SessionId"
+        ],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Active Server Pages (ASP)",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "When extending the capabilities of a service with additional packages, ensure that those packages are configured such that they do not advertise their presence in the header of the service.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": [
+        "X-Powered-By: PHP",
+        "Set-Cookie: PHPSESSID="
+        ],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "PHP",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "When extending the capabilities of a service with additional packages, ensure that those packages are configured such that they do not advertise their presence in the header of the service.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["X-Powered-By: Phusion Passenger 6.0.1"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Phusion Passenger",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "When extending the capabilities of a service with additional packages, ensure that those packages are configured such that they do not advertise their presence in the header of the service.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["X-Jenkins: "],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Jenkins",
+          "type": "service",
+          "severity": "error",
+          "description" : "Exposing components of your CI/CD pipeline to the Internet introduces a significant amount of risk of attack.  These components have access to highly-desirable artifacts such as source code as well as API keys to deployment infrastructure.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Set-Cookie: Bugzilla_login_request_cookie="],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Bugzilla",
+          "type": "service",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Microsoft FTP Service"],
+      "exceptions": [],
+      "tags": [
+        {
+           "name": "Microsoft FTP Service",
+           "type": "service",
+           "severity": "warn",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Red Hat FTP server ready."],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Red Hat FTP Service",
+          "type": "service",
+          "severity": "warn",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Serv-U"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Serv-U FTP Web Interface",
+          "type": "service",
+          "severity": "warn",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["220 (vsFTPd"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "vsftp",
+          "type": "service",
+          "severity": "warn",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["ESMTP Postfix"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Postfix SMTP Server",
+          "type": "service",
+          "severity": "info",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["@RSYNCD: "],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "rsync",
+          "type": "service",
+          "severity": "error",
+          "description": "",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["SSH-2.0-OpenSSH_"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "OpenSSH",
+          "type": "service",
+          "severity": "error",
+          "description": "Services often used for administrative access to systems such as SSH, Telnet, and Remote Desktop Protocol are highly targeted for brute force attacks.  These services should not be exposed tot he Internet without an explicit business justification.",
+          "recommendations": []
+        }
+      ]
+    }
+  ]
+}
