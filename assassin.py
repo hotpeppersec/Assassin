@@ -3,57 +3,32 @@
 import ipaddress
 import urllib2
 import json
+import apiKeys
 
-summary = { 
-  "hosts": 0,
-  "nonprod": 0,
-  "ips": 0,
-  "privateips": 0,
-  "reservedips": 0,
-  "services": 0,
-  "cloudservices": 0,
-  "cloudaws": 0,
-  "cloudawsregions": [],
-  "cloudgcp": 0,
-  "starttlsservices": 0,
-  "selfsignedservices": 0,
-  "servicessh": 0,
-  "servicentp": 0,
-  "serviceftp": 0,
-  "servicemail": 0,
-  "servicejenkins": 0,
-  "servicephp": 0,
-  "serviceasp": 0,
-  "serviceversions": 0,
-  "serviceeol": 0,
-  "serviceeos": 0,
-  "http1": 0,
-  "http200": 0,
-  "http3xx": 0,
-  "htmlforms": 0,
-  "redirectsameip": 0,
-  "redirectsamehost": 0,
-  "redirectdifferentiphost": 0,
-  "redirectdifferentdomain": 0,
-  "http5xx": 0,
-  "sslexpired": 0,
-  "sslwildcard": 0,
-  "sslnotdomain": 0,
-  "sslerrorversion": 0,
-  "sslwarnversion": 0,
-  "sslbadcipher": 0,
-  "vulntotal": 0,
-  "vulnlow": 0,
-  "vulnmedium": 0,
-  "vulnhigh": 0,
-  "vulncritical": 0,
-  "keyleaks": 0,
-  "waf": 0,
-  "mapdata": [],
-  "reversednspivottargets": [],
-  "redirectpivottargets": [],
-  "sslpivottargets": [],
-}
+if apiKeys.dnsdbKey:
+  dnsdbKey = apiKeys.dnsdbKey
+
+if apiKeys.vtKey:
+  vtKey = apiKeys.vtKey
+
+if apiKeys.shodanKey:
+  shodanKey = apiKeys.shodanKey
+
+if apiKeys.GoogleSafeBrowsingKey:
+  GoogleSafeBrowsingKey = apiKeys.GoogleSafeBrowsingKey
+
+if apiKeys.GoogleMapsKey:
+  GoogleMapsKey = apiKeys.GoogleMapsKey
+
+summary = {}
+
+try:
+  detectjson = open("serviceDetections.json", "r")
+  detectdata=json.load(detectjson)
+  detects = detectdata['service detections']
+  print("Signatures loaded")
+except:
+  print("Signature file is either missing or corrupt.")
 
 def getDomainInfo(domain):
   url = "https://rdap-pilot.verisignlabs.com/rdap/v1/domain/%s" % (domain, )
@@ -84,10 +59,9 @@ def getDnsht(domain):
   except:
     return False
 
-def getDnsdb(domain):
-  dnsdbkey = "dce-cc9d0395d2c77b3bc8fe487a5e9c65059667137b74d7e588585fac7321e9"
+def getDnsdb(domain, dnsdbKey):
   urlbase = "https://api.dnsdb.info/lookup/rrset/name/"
-  headers = { "X-API-Key": dnsdbkey }
+  headers = { "X-API-Key": dnsdbKey }
   data = ""
   url = "%s*.%s/A" % (urlbase, domain)
   request = urllib2.Request(url, data, headers)
@@ -107,9 +81,8 @@ def getDnsdb(domain):
   except:
     return False
 
-def getVtdomain(domain):
-  vtkey='7b047d96daebcbe4fc683016b07c4b82580603bbfab4a7a2fc055f1b6d5a0318'
-  url='https://www.virustotal.com/vtapi/v2/domain/report?domain=%s&apikey=%s' % (domain, vtkey)
+def getVtdomain(domain, vtKey):
+  url='https://www.virustotal.com/vtapi/v2/domain/report?domain=%s&apikey=%s' % (domain, vtKey)
   try:
     jsonresponse = urllib2.urlopen(url)
     response = json.loads(jsonresponse.read())
@@ -179,9 +152,8 @@ def getRevDns(ip):
   except:
     return False
 
-def getShodan(ip):
-  shodankey='C9tNjcBpKWoDmuqbbZ9lzeXKrv58iug8'
-  url='https://api.shodan.io/shodan/host/%s?key=%s' % (ip, shodankey)
+def getShodan(ip, shodanKey):
+  url='https://api.shodan.io/shodan/host/%s?key=%s' % (ip, shodanKey)
   try:
     jsonresponse = urllib2.urlopen(url)
     response = json.loads(jsonresponse.read())
@@ -292,29 +264,28 @@ if domaindata:
 #DOMAIN EXPIRATION
 
   if domaindata.has_key('events'):
-    if len(domaindata['events']) > 0:
-      for event in domaindata['events']:
-        if event.has_key('eventAction') and event.has_key('eventDate'):
-          report.write('<tr class="domain">')
-          if event['eventAction'] == "registration":
-            report.write('<td class="domain">Registration:</td>')
-          elif event['eventAction'] == "last changed":
-            report.write('<td class="domain">Last Changed:</td>')
-          elif event['eventAction'] == "expiration":
-            report.write('<td class="domain">Expiration:</td>')
-          datedata = event['eventDate'].split('T')[0]
-          eventyear = datedata.split('-')[0]
-          eventmonth = datedata.split('-')[1]
-          eventday = datedata.split('-')[2]
-          report.write('<td class="domain">%s/%s/%s</td>' % (eventmonth, eventday, eventyear))
-          report.write('</tr>\n')
+    for event in domaindata['events']:
+      if event.has_key('eventAction') and event.has_key('eventDate'):
+        report.write('<tr class="domain">')
+        if event['eventAction'] == "registration":
+          report.write('<td class="domain">Registration:</td>')
+        elif event['eventAction'] == "last changed":
+          report.write('<td class="domain">Last Changed:</td>')
+        elif event['eventAction'] == "expiration":
+          report.write('<td class="domain">Expiration:</td>')
+        datedata = event['eventDate'].split('T')[0]
+        eventyear = datedata.split('-')[0]
+        eventmonth = datedata.split('-')[1]
+        eventday = datedata.split('-')[2]
+        report.write('<td class="domain">%s/%s/%s</td>' % (eventmonth, eventday, eventyear))
+        report.write('</tr>\n')
   report.write('</table>\n')
 
 #HOSTS
 
 dnsht = getDnsht(domain)
-dnsdb = getDnsdb(domain)
-dnsvt = getVtdomain(domain)
+dnsdb = getDnsdb(domain, dnsdbKey)
+dnsvt = getVtdomain(domain, vtKey)
 hosts = dnsCombine(dnsht, dnsdb, dnsvt)
 
 if not hosts:
@@ -342,6 +313,8 @@ else:
       ("stage" in host.lower() or "staging" in host.lower())
       ):
       report.write('<span class="hostwarn">Possible non-production system</span>')
+      if not summary.has_key('nonprod'):
+        summary['nonprod'] = 0
       summary['nonprod'] += 1
 
     #hostname/domain/URL tags will go here in the future
@@ -349,14 +322,20 @@ else:
     ips = getFwdDns(host)
     if ips:
       for ip in ips:
+        if not summary.has_key('ips'):
+          summary['ips'] = 0
         summary['ips'] += 1
         report.write('<div class="ip">IP: %s</div>\n' % (ip, ))
         if checkPrivate(ip) or checkReserved(ip):
           if checkPrivate(ip):
+            if not summary.has_key('privateips'):
+              summary['privateips'] = 0
             summary['privateips'] += 1
             report.write('<span class="iperror">Private</span>')
           if checkReserved(ip):
-            summary['reservedips'] += 1
+            if not summary.has_key('reservedips'):
+              summary['reservedips'] = 0
+            summary['reserverips'] += 1
             report.write('<span class="iperror">Reserved</span>')
         else:
 
@@ -367,6 +346,8 @@ else:
             cleanreverse = reverse.lower().rstrip('.')
             report.write('<div class="ip">Reverse DNS: %s</div>\n' % (cleanreverse, ))
             if '.amazonaws.com' in cleanreverse:
+              if not summary.has_key('cloudaws'):
+                summary['cloudaws'] = 0
               summary['cloudaws'] += 1
               report.write('<span class="ipinfo">AWS</span>')
               if len(cleanreverse.replace('.amazonaws.com', '').split('.')) > 1:
@@ -375,11 +356,15 @@ else:
                 awsregion = cleanreverse.split('.')[0]
               if awsregion == 'compute-1':
                 awsregion = 'us-east-1'
+              if not summary.has_key('cloudawsregions'):
+                summary['cloudawsregions'] = []
               if awsregion not in summary['cloudawsregions']:
                 summary['cloudawsregions'].append(awsregion)
               report.write('<span class="ipinfo">AWS Region: %s</span>' % awsregion)
             if 'bc.googleusercontent.com' in cleanreverse:
               report.write('<span class="ipinfo">GCP</span>')
+              if not summary.has_key('cloudgcp'):
+                summary['cloudgcp'] = 0
               summary['cloudgcp'] += 1
             if '.cloudfront.net' in cleanreverse:
               report.write('<span class="ipinfo">AWS</span>')
@@ -391,6 +376,8 @@ else:
               '.cloudfront.net' not in cleanreverse and
               '.bc.googleusercontent.com' not in cleanreverse
               ):
+              if not summary.has_key('reversednspivottargets'):
+                summary['reversednspivottargets'] = []
               if cleanreverse not in summary['reversednspivottargets']:
                 summary['reversednspivottargets'].append(cleanreverse)
 
@@ -404,10 +391,12 @@ else:
 
 #SHODAN
 
-          shodan = getShodan(ip)
+          shodan = getShodan(ip, shodanKey)
           if shodan:
 
             if shodan.has_key('latitude') and shodan.has_key('longitude'):
+              if not summary.has_key('mapdata'):
+                summary['mapdata'] = []
               if {"latitude": shodan['latitude'], "longitude": shodan['longitude'] } not in summary['mapdata']:
                 summary['mapdata'].append({"latitude": shodan['latitude'], "longitude": shodan['longitude'] })
               
@@ -415,6 +404,8 @@ else:
             if shodan.has_key('data'):
 
               for service in shodan['data']:
+                if not summary.has_key('services'):
+                  summary['services'] = 0
                 summary['services'] += 1
 
                 report.write('<div class="service">\n')
@@ -424,22 +415,20 @@ else:
                   report.write("Service: %s/%s\n" % (service['transport'], service['port']))
                 report.write('</div>\n')
 
-#LOAD SERVICE SIGNATURES
-
-                detectjson = open("serviceDetections.json", "r")
-                detectdata=json.load(detectjson)
-                detects = detectdata['service detections']
-
                 servicetags = []
 
                 if service.has_key('tags'):
                   for tag in service['tags']:
                     if tag == "cloud":
                       servicetags.append({"severity": "info", "name": "cloud", "type": "service", "description": "This service is hosted in a cloud service provider.", "recommendations": [], "matches": []})
+                      if not summary.has_key('cloudservices'):
+                        summary['cloudservices'] = 0
                       summary['cloudservices'] += 1
                     if tag == "starttls":
-                      summary['starttlsservices'] += 1
                       servicetags.append({"severity": "warn", "name": "starttls", "type": "hardening", "description": "This service is potentially vulnerable to a startTLS attack.", "recommendations": [], "matches": []})
+                      if not summary.has_key('starttlsservices'):
+                        summary['starttlsservices'] = 0
+                      summary['starttlsservices'] += 1
 
                 if service.has_key('data'):
                   report.write('<div class="data"><pre>\n')
@@ -474,32 +463,51 @@ else:
                     "imap" in service['data'].lower()
                     ):
                     report.write('<span class="datainfo">Mail</span>')
+                    if not summary.has_key('servicemail'):
+                      summary['servicemail'] = 0
                     summary['servicemail'] += 1
 
 #HTTP
 
                   if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
-                    httpstatus = service['data'].encode('ascii', 'ignore').split('\n')[0].split(' ')[1]
-                    if httpstatus[0] == "3":
-                      summary['http3xx'] += 1
-                      for line in service['data'].split("\n"):
-                        if line.find("Location: ", 0, 10) <> -1:
-                          if ip in line:
-                            report.write('<span class="datawarning">Redirect to same IP</span>')
-                            summary['redirectsameip'] += 1
-                          elif host in line:
-                            report.write('<span class="datainfo">Redirect to same host</span>')
-                            summary['redirectsamehost'] += 1
+                    linezero = service['data'].encode('ascii', 'ignore').split('\n')[0]
+                    if len(linezero.split(' ')) > 1:
+                      httpstatus = service['data'].encode('ascii', 'ignore').split('\n')[0].split(' ')[1]
+                      if len(httpstatus) == 3:
+                        if httpstatus[0] == "3":
+                          if summary.has_key('httpredirect'):
+                            summary['httpredirect'] += 1
                           else:
-                            if domain not in line.split('?')[0]:
-                              pivottarget = line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].replace('www.', '')
-                              report.write('<span class="dataerror">Pivot Target: %s</span>' % pivottarget)
-                              summary['redirectdifferentdomain'] += 1
-                              if pivottarget not in summary['redirectpivottargets']:
-                                summary['redirectpivottargets'].append(pivottarget)
-                            else:
-                              report.write('<span class="datawarning">Redirect to different IP/host in the domain</span>')
-                              summary['redirectdifferentiphost'] += 1
+                            summary['httpredirect'] = 1
+                          for line in service['data'].split("\n"):
+                            if line.find("Location: ", 0, 10) <> -1:
+                              if ip in line:
+                                report.write('<span class="datawarning">Redirect to same IP</span>')
+                                if not summary.has_key('redirectsameip'):
+                                  summary['redirectsameip'] = 0
+                                summary['redirectsameip'] += 1
+                              elif host in line:
+                                report.write('<span class="datainfo">Redirect to same host</span>')
+                                if not summary.has_key('redirectsamehost'):
+                                  summary['redirectsamehost'] = 0
+                                summary['redirectsamehost'] += 1
+                              else:
+                                if domain not in line.split('?')[0]:
+                                  pivottarget = line.split('?')[0].split(' ')[1].lstrip('https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].replace('www.', '')
+                                  report.write('<span class="dataerror">Pivot Target: %s</span>' % pivottarget)
+                                  if not summary.has_key('redirectdifferentdomain'):
+                                    summary['redirectdifferentdomain'] = 0
+                                  summary['redirectdifferentdomain'] += 1 
+                                  if not summary.has_key('redirectpivottargets'):
+                                    summary['redirectpivottargets'] = []
+                                  if pivottarget not in summary['redirectpivottargets']:
+                                    summary['redirectpivottargets'].append(pivottarget)
+                                else:
+                                  report.write('<span class="datawarning">Redirect to different IP/host in the domain</span>')
+                                  if not summary.has_key('redirectdifferentiphost'):
+                                    summary['redirectdifferentiphost'] = 0
+                                  summary['redirectdifferentiphost'] += 1
+
 #DISPLAY HEADER TAGS
 
                 for tag in servicetags:
@@ -513,10 +521,13 @@ else:
                     report.write('<span class="datacritical">%s</span>\n' % (tag['name'], ))
                   report.write('<div class="tagdata">\n')
                   for match in tag['matches']:
-                    report.write('Match: %s<br>\n' % (match, ))
+                    report.write('Match: %s<br>\n' % (match.replace('<','&lt').replace('>', '&gt')))
                   report.write('Description: %s<br>\n' % (tag['description'], ))
                   for recommendation in tag['recommendations']:
                     report.write('Recommendation: %s<br>\n' % (recommendation, ))
+                  if not summary.has_key(tag['type']):
+                    summary[tag['type']] = 0
+                  summary[tag['type']] += 1
                   report.write('</div>\n')
 
 #HTML
@@ -533,12 +544,31 @@ else:
                             report.write('</pre></dev>\n')
                             report.write('<span class="dataerror">Possible Key Leak (High Confidence)</span>')
                             report.write('<div class="data"><pre>\n')
+                            if not summary.has_key('keyleaks'):
+                              summary['keyleaks'] = 0
                             summary['keyleaks'] += 1
                           elif ((("api" in line.lower() and "key=" in line.lower()) or ("authorization=" in line.lower())) and ("googleapis.com" not in line.lower())):
                             report.write('</pre></dev>\n')
                             report.write('<span class="datawarning">Possible Key Leak (Low Confidence)</span>')
                             report.write('<div class="data"><pre>\n')
+                            if not summary.has_key('keyleaks'):
+                              summary['keyleaks'] = 0
                             summary['keyleaks'] += 1
+                          if 'a href="' in line.lower() and ("http://" in line.lower() or "https://" in line.lower()):
+                            print line
+
+                            linkhost = line.lower().replace("&gt", "").replace("&lt", "").split('a href="')[1].split('"')[0].replace("http://", "").replace("https://", "").split("/")[0]
+
+                            if domain in linkhost:
+                              if linkhost not in hosts:
+                                print "Discovered additional host from HTML link: %s" % (linkhost, )
+                                hosts.append(linkhost)
+                            else:
+                              if not summary.has_key('linkpivottargets'):
+                                summary['linkpivottargets'] = []
+                              if linkhost not in summary['linkpivottargets']:
+                                summary['linkpivottargets'].append(linkhost)
+                                print "New potential pivot from link: %s" % (linkhost, )
 
 #HTML FORMS
 
@@ -546,6 +576,8 @@ else:
                             report.write('</pre></dev>\n')
                             report.write('<span class="datainfo">HTML Form</span>')
                             report.write('<div class="data"><pre>\n')
+                            if not summary.has_key('htmlforms'):
+                              summary['htmlforms'] = 0
                             summary['htmlforms'] += 1
 
                       report.write('</pre></div>\n')
@@ -584,6 +616,8 @@ else:
                         report.write('CN: %s<br>\n' % (subject['CN'].encode('ascii', 'ignore'), ))
                         report.write('</div>\n')
                         if domain not in subject['CN'].lower():
+                          if not summary.has_key('sslnotdomain'):
+                            summary['sslnotdomain'] = 0
                           summary['sslnotdomain'] += 1
                           pivottarget = subject['CN'].encode('ascii', 'ignore').lower().lstrip('*.').rstrip('/').replace('www.', '')
                           if ip == pivottarget:
@@ -594,6 +628,8 @@ else:
                               "cloudfront.net" not in pivottarget
                               ):
                               report.write('<span class="sslerror">Pivot Target: %s</span>' % pivottarget)
+                              if not summary.has_key('sslpivottargets'):
+                                summary['sslpivottargets'] = []
                               if pivottarget not in summary['sslpivottargets']:
                                 summary['sslpivottargets'].append(pivottarget)
 
@@ -601,6 +637,8 @@ else:
 
                         if service['ssl']['cert']['subject']['CN'][0] == "*":
                           report.write('<span class="sslwarning">Wildcard</span>')
+                          if not summary.has_key('sslwildcard'):
+                            summary['sslwildcard'] = 0
                           summary['sslwildcard'] += 1
 
 #SSL SELF-SIGNED
@@ -611,6 +649,8 @@ else:
                       if subject and issuer:
                         if subject == issuer:
                           report.write('<span class="sslerror">Self-Signed</span>')
+                          if not summary.has_key('selfsignedservices'):
+                            summary['selfsignedservices'] = 0
                           summary['selfsignedservices'] += 1
 
 #SSL ISSUER
@@ -641,6 +681,8 @@ else:
                     if service['ssl']['cert'].has_key('expired'):
                       if service['ssl']['cert']['expired']:
                         report.write('<span class="sslerror">Expired</span>')
+                        if not summary.has_key('sslexpired'):
+                          summary['sslexpired'] = 0
                         summary['sslexpired'] += 1
 
 #SSL VERSIONS
@@ -655,11 +697,15 @@ else:
                         report.write('</div>\n')
                         report.write('<span class="sslerror">%s</span>\n' % (version, ))
                         report.write('<div class="ssldata">\n')
+                        if not summary.has_key('sslerrorversion'):
+                          summary['sslerrorversion'] = 0
                         summary['sslerrorversion'] += 1
                       elif version.strip() in warnversions:
                         report.write('</div>\n')
                         report.write('<span class="sslwarning">%s</span>\n' % (version, ))
                         report.write('<div class="ssldata">\n')
+                        if not summary.has_key('sslwarnversion'):
+                          summary['sslwarnversion'] = 0
                         summary['sslwarnversion'] += 1
                       else:
                         report.write('%s<br>\n' % (version, ))
@@ -699,6 +745,8 @@ else:
                       report.write('</div>\n')
                       if cipher not in goodciphers:
                         report.write('<span class="sslwarning">Less Secure Cipher</span>')
+                        if not summary.has_key('sslbadcipher'):
+                          summary['sslbadcipher'] = 0
                         summary['sslbadcipher'] += 1
 
 #VULN
@@ -712,6 +760,8 @@ else:
                   report.write("</tr>\n")
                   vulns = service['vulns']
 		  for vuln in vulns:
+                    if not summary.has_key('vulntotal'):
+                      summary['vulntotal'] = 0
                     summary['vulntotal'] += 1
                     if vulns[vuln].has_key('cvss') and vulns[vuln].has_key('summary'):
                       report.write('<tr class="vulnerability">')
@@ -720,15 +770,23 @@ else:
                       cvss = vulns[vuln]['cvss']
                       if 0.1 <= float(cvss) < 4:
                         report.write(' bgcolor="yellow"')
+                        if not summary.has_key('vulnlow'):
+                          summary['vulnlow'] = 0
                         summary['vulnlow'] += 1
                       elif 4 <= float(cvss) < 7:
                         report.write(' bgcolor="orange"')
+                        if not summary.has_key('vulnmedium'):
+                          summary['vulnmedium'] = 0
                         summary['vulnmedium'] += 1
                       elif 7 <= float(cvss) < 9:
                         report.write(' bgcolor="red"')
+                        if not summary.has_key('vulnhigh'):
+                          summary['vulnhigh'] = 0
                         summary['vulnhigh'] += 1
                       elif 9 <= float(cvss):
                         report.write(' bgcolor="purple"')
+                        if not summary.has_key('vulncritical'):
+                          summary['vulncritical'] = 0
                         summary['vulncritical'] += 1
                       report.write('>%s</td>' % (cvss, ))
                       report.write('<td class="vulnerability">%s</td>' % (vulns[vuln]['summary'], ))
@@ -738,6 +796,9 @@ else:
 report.write('</body>\n')
 report.write('</html>\n')
 report.close()
+
+for key in summary:
+  print("%s: %s" % (key, summary[key]))
 
 sumfile = "%s-summary.html" % (domain.split(".")[0], )
 sum = open(sumfile, "w")
@@ -771,83 +832,88 @@ for entry in summary['mapdata']:
   sum.write("  var marker%s = new google.maps.Marker({position: point%s, map: map});\n" % (entrycounter, entrycounter))
   entrycounter += 1
 
-sum.write("""}
-    </script>
-    <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDCRRZ3p8yhxJP1-9IscmsxB78zAAL64AU&callback=initMap">
-    </script>
-""")
+sum.write("}\n")
+sum.write("</script>\n")
+sum.write('<script async defer src="https://maps.googleapis.com/maps/api/js?key=%s&callback=initMap">\n' % (GoogleMapsKey, ))
+sum.write("</script>\n")
 
 sum.write("<br>\n")
 sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
-sum.write("Non-Production Hosts: %s<br>\n" % (str(summary['nonprod']), ))
-if summary['cloudaws'] > 0:
+if summary.has_key('nonprod'):
+  sum.write("Non-Production Hosts: %s<br>\n" % (str(summary['nonprod']), ))
+if summary.has_key('cloudaws'):
   sum.write("AWS Hosts: %s<br>\n" % (str(summary['cloudaws']), ))
-  sum.write("AWS Regions:<br>\n")
-  for region in summary['cloudawsregions']:
-    sum.write("%s<br>\n" % region)
-if summary['cloudgcp'] > 0:
+  if summary.has_key('cloudawsregions'):
+    sum.write("AWS Regions:<br>\n")
+    for region in summary['cloudawsregions']:
+      sum.write("%s<br>\n" % region)
+if summary.has_key('cloudgcp'):
   sum.write("GCP Hosts: %s<br>\n" % (str(summary['cloudgcp']), ))
 
 sum.write("<br>IPs<br>\n")
-sum.write("Total: %s<br>\n" % (summary['ips'], ))
-sum.write("Private: %s<br>\n" % (summary['privateips'], ))
-sum.write("Reserved: %s<br>\n" % (summary['reservedips'], ))
+if summary.has_key('ips'):
+  sum.write("Total: %s<br>\n" % (summary['ips'], ))
+if summary.has_key('privateips'):
+  sum.write("Private: %s<br>\n" % (summary['privateips'], ))
+if summary.has_key('reservedips'):
+  sum.write("Reserved: %s<br>\n" % (summary['reservedips'], ))
 
 sum.write("<br>Services<br>\n")
-sum.write("Total: %s<br>\n" % (summary['services'], ))
-sum.write("Cloud: %s<br>\n" % (summary['cloudservices'], ))
+if summary.has_key('sevices'):
+  sum.write("Total: %s<br>\n" % (summary['services'], ))
+if summary.has_key('cloudservices'):
+  sum.write("Cloud: %s<br>\n" % (summary['cloudservices'], ))
 
-sum.write("SSH Services: %s<br>\n" % (summary['servicessh'], ))
-sum.write("FTP Services: %s<br>\n" % (summary['serviceftp'], ))
-sum.write("NTP Services: %s<br>\n" % (summary['servicentp'], ))
-sum.write("Mail Services: %s<br>\n" % (summary['servicemail'], ))
-sum.write("Jenkins Services: %s<br>\n" % (summary['servicejenkins'], ))
 
-sum.write("<br>HTTP Hardening<br>\n")
-sum.write("Web services protected by a WAF: %s<br>\n" % (summary['waf'], ))
-sum.write("Web services that respond to HTTP/1.0 requests: %s<br>\n" % (summary['http1'], ))
-sum.write("Web services that identify their version: %s<br>\n" % (summary['serviceversions'], ))
-sum.write("Web Services Utilizing PHP: %s<br>\n" % (summary['servicephp'], ))
-sum.write("Web Services Utilizing ASP: %s<br>\n" % (summary['servicephp'], ))
-sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
-sum.write("HTML Forms Detected: %s<br>\n" % (summary['htmlforms'], ))
-sum.write("Possible API Key Leaks Detected: %s<br>\n" % (summary['keyleaks'], ))
-sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
-sum.write("Proper redirects to the same DNS host: %s<br>\n" % (summary['redirectsamehost'], ))
-sum.write("Redirects to the same IP (should point to DNS name instead): %s<br>\n" % (summary['redirectsameip'], ))
-sum.write("Redirects to the same domain (need lifecycle management): %s<br>\n" % (summary['redirectdifferentiphost'], ))
-sum.write("Redirects to different domains (pivot targets): %s<br>\n" % (summary['redirectdifferentdomain'], ))
-sum.write("Application/Server Errors: %s<br>\n" % (summary['http5xx'], ))
-sum.write("End-of-life Services: %s<br>\n" % (summary['serviceeol'], ))
-sum.write("End-of-support Services: %s<br>\n" % (summary['serviceeos'], ))
+#sum.write("<br>HTTP Hardening<br>\n")
+#sum.write("Web services protected by a WAF: %s<br>\n" % (summary['waf'], ))
+#sum.write("Web services that respond to HTTP/1.0 requests: %s<br>\n" % (summary['http1'], ))
+#sum.write("Web services that identify their version: %s<br>\n" % (summary['serviceversions'], ))
+#sum.write("Web Services Utilizing PHP: %s<br>\n" % (summary['servicephp'], ))
+#sum.write("Web Services Utilizing ASP: %s<br>\n" % (summary['servicephp'], ))
+#sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
+#sum.write("HTML Forms Detected: %s<br>\n" % (summary['htmlforms'], ))
+#sum.write("Possible API Key Leaks Detected: %s<br>\n" % (summary['keyleaks'], ))
+#sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
+#sum.write("Proper redirects to the same DNS host: %s<br>\n" % (summary['redirectsamehost'], ))
+#sum.write("Redirects to the same IP (should point to DNS name instead): %s<br>\n" % (summary['redirectsameip'], ))
+#sum.write("Redirects to the same domain (need lifecycle management): %s<br>\n" % (summary['redirectdifferentiphost'], ))
+#sum.write("Redirects to different domains (pivot targets): %s<br>\n" % (summary['redirectdifferentdomain'], ))
+#sum.write("Application/Server Errors: %s<br>\n" % (summary['http5xx'], ))
+#sum.write("End-of-life Services: %s<br>\n" % (summary['serviceeol'], ))
+#sum.write("End-of-support Services: %s<br>\n" % (summary['serviceeos'], ))
 
-sum.write("<br>SSL<br>\n")
-sum.write("Wildcard Certificates: %s<br>\n" % (summary['sslwildcard'], ))
-sum.write("Vulnerable TLS Mail Services: %s<br>\n" % (summary['starttlsservices'], ))
-sum.write("Self-Signed Certificates: %s<br>\n" % (summary['selfsignedservices'], ))
-sum.write("Insecure SSL Versions: %s<br>\n" % (summary['sslerrorversion'], ))
-sum.write("Non-compliant SSL Versions: %s<br>\n" % (summary['sslwarnversion'], ))
-sum.write("Bad SSL Ciphers: %s<br>\n" % (summary['sslbadcipher'], ))
-sum.write("Expired Certificates: %s<br>\n" % (summary['sslexpired'], ))
-sum.write("Potential pivot targets identified by SSL certificate: %s<br>\n" % (summary['sslnotdomain'], ))
+#sum.write("<br>SSL<br>\n")
+#sum.write("Wildcard Certificates: %s<br>\n" % (summary['sslwildcard'], ))
+#sum.write("Vulnerable TLS Mail Services: %s<br>\n" % (summary['starttlsservices'], ))
+#sum.write("Self-Signed Certificates: %s<br>\n" % (summary['selfsignedservices'], ))
+#sum.write("Insecure SSL Versions: %s<br>\n" % (summary['sslerrorversion'], ))
+#sum.write("Non-compliant SSL Versions: %s<br>\n" % (summary['sslwarnversion'], ))
+#sum.write("Bad SSL Ciphers: %s<br>\n" % (summary['sslbadcipher'], ))
+#sum.write("Expired Certificates: %s<br>\n" % (summary['sslexpired'], ))
+#sum.write("Potential pivot targets identified by SSL certificate: %s<br>\n" % (summary['sslnotdomain'], ))
 
 sum.write("<br>Vulnerabilities<br>\n")
-sum.write("Total: %s<br>\n" % (summary['vulntotal'], ))
-sum.write("Low: %s<br>\n" % (summary['vulnlow'], ))
-sum.write("Medium: %s<br>\n" % (summary['vulnmedium'], ))
-sum.write("High: %s<br>\n" % (summary['vulnhigh'], ))
-sum.write("Critical: %s<br>\n" % (summary['vulncritical'], ))
+if summary.has_key('vulntotal'):
+  sum.write("Total: %s<br>\n" % (summary['vulntotal'], ))
+if summary.has_key('vulnlow'):
+  sum.write("Low: %s<br>\n" % (summary['vulnlow'], ))
+if summary.has_key('vulnmedium'):
+  sum.write("Medium: %s<br>\n" % (summary['vulnmedium'], ))
+if summary.has_key('vulnhigh'):
+  sum.write("High: %s<br>\n" % (summary['vulnhigh'], ))
+if summary.has_key('vulncritical'):
+  sum.write("Critical: %s<br>\n" % (summary['vulncritical'], ))
 
-if len(summary['reversednspivottargets']) > 0:
+if summary.has_key('reversednspivottargets'):
   sum.write("<br>Reverse DNS Pivot Targets<br>\n")
   for target in summary['reversednspivottargets']:
     sum.write("%s<br>\n" % (target, ))
-if len(summary['redirectpivottargets']) > 0:
+if summary.has_key('redirectpivottargets'):
   sum.write("<br>Redirect Pivot Targets<br>\n")
   for target in summary['redirectpivottargets']:
     sum.write("%s<br>\n" % (target, ))
-if len(summary['sslpivottargets']) > 0:
+if summary.has_key('sslpivottargets'):
   sum.write("<br>SSL Pivot Targets<br>\n")
   for target in summary['sslpivottargets']:
     sum.write("%s<br>\n" % (target, ))

@@ -63,7 +63,7 @@
           "name": "Server Tokens: IIS/6.0", 
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
         },
         {
@@ -83,7 +83,7 @@
           "name": "Server Tokens: IIS/7.5",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
         },
         {
@@ -103,7 +103,7 @@
           "name": "Server Tokens: IIS/8.0",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
         }
       ]
@@ -116,7 +116,7 @@
           "name": "Server Tokens: IIS/8.5",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
         }
       ]
@@ -129,7 +129,7 @@
           "name": "Server Tokens: IIS/10.0",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
         }
       ]
@@ -143,7 +143,7 @@
           "name": "Server Tokens: HTTPAPI 2.0",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": []
         }
       ]
@@ -169,7 +169,7 @@
           "name": "Server Tokens: Apache/2.2",
           "type": "hardening",
           "severity": "error",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": []
         },
         {
@@ -189,7 +189,7 @@
           "name": "Server Tokens: Apache/2.4",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": []
         }
       ]
@@ -215,7 +215,7 @@
           "name": "Server Tokens: nginx/1",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": []
         }
       ]
@@ -228,7 +228,7 @@
           "name": "Service Tokens: Apache Tomcat",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": []
         }
       ]
@@ -241,7 +241,7 @@
           "name": "Service Tokens: Eclipse Jetty",
           "type": "hardening",
           "severity": "warn",
-          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potentiol attacker to footprint vulnerable or poorly maintained services.",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint vulnerable or poorly maintained services.",
           "recommendations": []
         }
       ]
@@ -511,6 +511,19 @@
           "type": "service",
           "severity": "error",
           "description": "Services often used for administrative access to systems such as SSH, Telnet, and Remote Desktop Protocol are highly targeted for brute force attacks.  These services should not be exposed tot he Internet without an explicit business justification.",
+          "recommendations": []
+        }
+      ]
+    },
+    {
+      "signatures": ["Server: Tableau", "X-Tableau: Tableau Server"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Tableau",
+          "type": "service",
+          "severity": "info",
+          "description": "",
           "recommendations": []
         }
       ]
