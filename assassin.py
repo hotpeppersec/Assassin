@@ -31,7 +31,7 @@ except:
   print("Signature file is either missing or corrupt.")
 
 def getDomainInfo(domain):
-  url = "https://rdap-pilot.verisignlabs.com/rdap/v1/domain/%s" % (domain, )
+  url = "https://rdap.verisignlabs.com/rdap/v1/domain/%s" % (domain, )
   try:
     jsonresponse = urllib2.urlopen(url)
     response=json.loads(jsonresponse.read())
