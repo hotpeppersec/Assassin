@@ -25,7 +25,8 @@ except:
   print("Signature file is either missing or corrupt.")
 
 def getDomainInfo(domain):
-  url = "https://rdap.verisignlabs.com/rdap/v1/domain/%s" % (domain, )
+  print("Verisign")
+  url = "https://rdap.verisign.com/com/v1/domain/%s" % (domain, )
   try:
     jsonresponse = urllib2.urlopen(url)
     response=json.loads(jsonresponse.read())
@@ -35,6 +36,7 @@ def getDomainInfo(domain):
     return False
 
 def getDnsht(domain):
+  print("Hacker Target")
   url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain, )
   try:
     response = urllib2.urlopen(url)
@@ -53,34 +55,12 @@ def getDnsht(domain):
   except:
     return False
 
-def getDnsdb(domain, dnsdbKey):
-  urlbase = "https://api.dnsdb.info/lookup/rrset/name/"
-  headers = { "X-API-Key": dnsdbKey }
-  data = ""
-  url = "%s*.%s/A" % (urlbase, domain)
-  request = urllib2.Request(url, data, headers)
-  try:
-    output = []
-    response = urllib2.urlopen(request)
-    for result in response.read().split("\n"):
-      if (result.strip() != "" and result[0] != ";"):
-        fields = result.split(" ")
-        if (fields[2] == "A"):
-          output.append(fields[0].rstrip('.'))
-    if output == []:
-      return False
-    else:
-      print "Received %s hosts from DNSDB" % (len(output), )
-      return output
-  except:
-    return False
-
 def getVtdomain(domain, vtKey):
+  print("VirusTotal")
   url='https://www.virustotal.com/vtapi/v2/domain/report?domain=%s&apikey=%s' % (domain, vtKey)
   try:
     jsonresponse = urllib2.urlopen(url)
     response = json.loads(jsonresponse.read())
-#    print response
     print "Received %s hosts from VirusTotal" % (len(response['subdomains']), )
     print "Verdict: %s" % (response['Webutation domain info']['Verdict'], )
     print "Adult Content: %s" % (response['Webutation domain info']['Adult content'], )
@@ -89,15 +69,11 @@ def getVtdomain(domain, vtKey):
   except:
     return False
 
-def dnsCombine(dnsht, dnsdb, dnsvt):
+def dnsCombine(dnsht, dnsvt):
   print "Combining and de-duplicating hosts"
   output = []
   if dnsht:
     for entry in dnsht:
-      if entry not in output:
-        output.append(entry)
-  if dnsdb:
-    for entry in dnsdb:
       if entry not in output:
         output.append(entry)
   if dnsvt:
@@ -278,9 +254,8 @@ if domaindata:
 #HOSTS
 
 dnsht = getDnsht(domain)
-dnsdb = getDnsdb(domain, dnsdbKey)
 dnsvt = getVtdomain(domain, vtKey)
-hosts = dnsCombine(dnsht, dnsdb, dnsvt)
+hosts = dnsCombine(dnsht, dnsvt)
 
 if not hosts:
   print "No DNS entries discovered for target domain"
@@ -548,8 +523,8 @@ else:
                             if not summary.has_key('keyleaks'):
                               summary['keyleaks'] = 0
                             summary['keyleaks'] += 1
-                          if 'a href="' in line.lower() and ("http://" in line.lower() or "https://" in line.lower()):
-                            print line
+                          #if 'a href="' in line.lower() and ("http://" in line.lower() or "https://" in line.lower()):
+                            #print line
 
                             linkhost = line.lower().replace("&gt", "").replace("&lt", "").split('a href="')[1].split('"')[0].replace("http://", "").replace("https://", "").split("/")[0]
 
