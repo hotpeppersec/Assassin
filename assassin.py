@@ -756,8 +756,8 @@ report.write('</body>\n')
 report.write('</html>\n')
 report.close()
 
-for key in summary:
-  print("%s: %s" % (key, summary[key]))
+#for key in summary:
+#  print("%s: %s" % (key, summary[key]))
 
 sumfile = "%s-summary.html" % (domain.split(".")[0], )
 sum = open(sumfile, "w")
