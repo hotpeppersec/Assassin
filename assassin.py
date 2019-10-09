@@ -236,19 +236,15 @@ if domaindata:
   if domaindata.has_key('events'):
     for event in domaindata['events']:
       if event.has_key('eventAction') and event.has_key('eventDate'):
-        report.write('<tr class="domain">')
-        if event['eventAction'] == "registration":
-          report.write('<td class="domain">Registration:</td>')
-        elif event['eventAction'] == "last changed":
-          report.write('<td class="domain">Last Changed:</td>')
-        elif event['eventAction'] == "expiration":
+        if event['eventAction'] == "expiration":
+          report.write('<tr class="domain">')
           report.write('<td class="domain">Expiration:</td>')
-        datedata = event['eventDate'].split('T')[0]
-        eventyear = datedata.split('-')[0]
-        eventmonth = datedata.split('-')[1]
-        eventday = datedata.split('-')[2]
-        report.write('<td class="domain">%s/%s/%s</td>' % (eventmonth, eventday, eventyear))
-        report.write('</tr>\n')
+          datedata = event['eventDate'].split('T')[0]
+          eventyear = datedata.split('-')[0]
+          eventmonth = datedata.split('-')[1]
+          eventday = datedata.split('-')[2]
+          report.write('<td class="domain">%s/%s/%s</td>' % (eventmonth, eventday, eventyear))
+          report.write('</tr>\n')
   report.write('</table>\n')
 
 #HOSTS
