@@ -540,7 +540,7 @@ else:
                       for line in htmllines:
                         if len(line.strip().rstrip("\n")) > 0:
                           report.write("%s\n" % (line.encode('ascii', 'ignore').replace("<", "&lt").replace(">", "&gt"), ))
-                          if ("&key=" in line.lower() or "\"apikey\":" in line.lower()) and ("googleapis.com" not in line.lower()):
+                          if ("&key=" in line.lower() or "apikey" in line.lower()) and ("googleapis.com" not in line.lower()):
                             report.write('</pre></dev>\n')
                             report.write('<span class="dataerror">Possible Key Leak (High Confidence)</span>')
                             report.write('<div class="data"><pre>\n')

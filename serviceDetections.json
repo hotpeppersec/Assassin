@@ -76,6 +76,26 @@
       ]
     },
     {
+      "signatures": ["Server: Microsoft-IIS/7.0"],
+      "exceptions": [],
+      "tags": [
+        {
+          "name": "Server Tokens: IIS/7.0",
+          "type": "hardening",
+          "severity": "warn",
+          "description": "Services should be configured in such a way as to not expose version information.  This makes it more difficult for a potential attacker to footprint $
+          "recommendations": ["https://www.saotn.org/remove-iis-server-version-http-response-header/"]
+        },
+        {
+          "name": "End of Mainstream Support",
+          "type": "maintenance",
+          "severity": "error",
+          "description": "Microsoft ISS version 7.5 is no longer supported by Microsoft with regular patches and updates.",
+          "recommendations": ["Upgrade to a supported version of IIS (and underlying server operating system) as soon as possible."]
+        }
+      ]
+    },
+    {
       "signatures": ["Server: Microsoft-IIS/7.5"],
       "exceptions": [],
       "tags": [
