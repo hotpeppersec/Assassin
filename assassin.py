@@ -504,29 +504,22 @@ else:
                 if service.has_key('http'):
                   if service['http'].has_key('html'):
                     if service['http']['html'] is not None:
-                      htmllines = service['http']['html'].encode('ascii', 'ignore').strip().replace("<", "&lt").replace(">", "&gt").split("\n")
+                      htmllines = service['http']['html'].encode('ascii', 'ignore').strip().split("\n")
                       report.write('<div class="data"><pre>\n')
                       for line in htmllines:
                         if len(line.strip().rstrip("\n")) > 0:
                           report.write("%s\n" % (line.encode('ascii', 'ignore').replace("<", "&lt").replace(">", "&gt"), ))
                           if ("&key=" in line.lower() or "apikey" in line.lower()) and ("googleapis.com" not in line.lower()):
                             report.write('</pre></dev>\n')
-                            report.write('<span class="dataerror">Possible Key Leak (High Confidence)</span>')
+                            report.write('<span class="dataerror">Possible API Key Leak</span>')
                             report.write('<div class="data"><pre>\n')
                             if not summary.has_key('keyleaks'):
                               summary['keyleaks'] = 0
                             summary['keyleaks'] += 1
-                          elif ((("api" in line.lower() and "key=" in line.lower()) or ("authorization=" in line.lower())) and ("googleapis.com" not in line.lower())):
-                            report.write('</pre></dev>\n')
-                            report.write('<span class="datawarning">Possible Key Leak (Low Confidence)</span>')
-                            report.write('<div class="data"><pre>\n')
-                            if not summary.has_key('keyleaks'):
-                              summary['keyleaks'] = 0
-                            summary['keyleaks'] += 1
-                          #if 'a href="' in line.lower() and ("http://" in line.lower() or "https://" in line.lower()):
+                          if 'a href="' in line.lower() and ("http://" in line.lower() or "https://" in line.lower()):
                             #print line
 
-                            linkhost = line.lower().replace("&gt", "").replace("&lt", "").split('a href="')[1].split('"')[0].replace("http://", "").replace("https://", "").split("/")[0]
+                            linkhost = line.lower().replace(">", "").replace("<", "").split('a href="')[1].split('"')[0].replace("http://", "").replace("https://", "").split("/")[0]
 
                             if domain in linkhost:
                               if linkhost not in hosts:
@@ -542,6 +535,7 @@ else:
 #HTML FORMS
 
                           if "&ltform " in line.lower():
+                            #report.write("%s\n" % (line.encode('ascii', 'ignore').replace("<", "&lt").replace(">", "&gt"), ))
                             report.write('</pre></dev>\n')
                             report.write('<span class="datainfo">HTML Form</span>')
                             report.write('<div class="data"><pre>\n')
