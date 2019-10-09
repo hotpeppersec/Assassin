@@ -127,7 +127,7 @@ def getShodan(ip, shodanKey):
   try:
     jsonresponse = urllib2.urlopen(url)
     response = json.loads(jsonresponse.read())
-    return response  
+    return response
   except:
     return False
 
@@ -364,7 +364,7 @@ else:
                 summary['mapdata'] = []
               if {"latitude": shodan['latitude'], "longitude": shodan['longitude'] } not in summary['mapdata']:
                 summary['mapdata'].append({"latitude": shodan['latitude'], "longitude": shodan['longitude'] })
-              
+
 
             if shodan.has_key('data'):
 
@@ -462,7 +462,7 @@ else:
                                   report.write('<span class="dataerror">Pivot Target: %s</span>' % pivottarget)
                                   if not summary.has_key('redirectdifferentdomain'):
                                     summary['redirectdifferentdomain'] = 0
-                                  summary['redirectdifferentdomain'] += 1 
+                                  summary['redirectdifferentdomain'] += 1
                                   if not summary.has_key('redirectpivottargets'):
                                     summary['redirectpivottargets'] = []
                                   if pivottarget not in summary['redirectpivottargets']:
@@ -582,7 +582,7 @@ else:
                           if ip == pivottarget:
                             report.write('<span class="sslwarning">Pivot Target: %s</span>' % pivottarget)
                           else:
-                            if ( 
+                            if (
                               "cloudflaressl.com" not in pivottarget and
                               "cloudfront.net" not in pivottarget
                               ):
@@ -751,7 +751,7 @@ else:
                       report.write('<td class="vulnerability">%s</td>' % (vulns[vuln]['summary'], ))
                       report.write("</tr>\n")
                   report.write("</table>")
- 
+
 report.write('</body>\n')
 report.write('</html>\n')
 report.close()
@@ -781,15 +781,16 @@ function initMap() {
 
 
 entrycounter = 1
-for entry in summary['mapdata']:
-  sum.write("  var point%s = {lat: %s, lng: %s};\n" % (str(entrycounter), entry['latitude'], entry['longitude']))
-  entrycounter += 1
-sum.write("  var map = new google.maps.Map(document.getElementById('map'), {zoom: 1.75, center: center});\n")
+if summary.has_key('mapdata'):
+    for entry in summary['mapdata']:
+        sum.write("  var point%s = {lat: %s, lng: %s};\n" % (str(entrycounter), entry['latitude'], entry['longitude']))
+        entrycounter += 1
+    sum.write("  var map = new google.maps.Map(document.getElementById('map'), {zoom: 1.75, center: center});\n")
 
-entrycounter = 1
-for entry in summary['mapdata']:
-  sum.write("  var marker%s = new google.maps.Marker({position: point%s, map: map});\n" % (entrycounter, entrycounter))
-  entrycounter += 1
+    entrycounter = 1
+    for entry in summary['mapdata']:
+        sum.write("  var marker%s = new google.maps.Marker({position: point%s, map: map});\n" % (entrycounter, entrycounter))
+        entrycounter += 1
 
 sum.write("}\n")
 sum.write("</script>\n")
@@ -824,33 +825,57 @@ if summary.has_key('cloudservices'):
   sum.write("Cloud: %s<br>\n" % (summary['cloudservices'], ))
 
 
-#sum.write("<br>HTTP Hardening<br>\n")
-#sum.write("Web services protected by a WAF: %s<br>\n" % (summary['waf'], ))
-#sum.write("Web services that respond to HTTP/1.0 requests: %s<br>\n" % (summary['http1'], ))
-#sum.write("Web services that identify their version: %s<br>\n" % (summary['serviceversions'], ))
-#sum.write("Web Services Utilizing PHP: %s<br>\n" % (summary['servicephp'], ))
-#sum.write("Web Services Utilizing ASP: %s<br>\n" % (summary['servicephp'], ))
-#sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
-#sum.write("HTML Forms Detected: %s<br>\n" % (summary['htmlforms'], ))
-#sum.write("Possible API Key Leaks Detected: %s<br>\n" % (summary['keyleaks'], ))
-#sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
-#sum.write("Proper redirects to the same DNS host: %s<br>\n" % (summary['redirectsamehost'], ))
-#sum.write("Redirects to the same IP (should point to DNS name instead): %s<br>\n" % (summary['redirectsameip'], ))
-#sum.write("Redirects to the same domain (need lifecycle management): %s<br>\n" % (summary['redirectdifferentiphost'], ))
-#sum.write("Redirects to different domains (pivot targets): %s<br>\n" % (summary['redirectdifferentdomain'], ))
-#sum.write("Application/Server Errors: %s<br>\n" % (summary['http5xx'], ))
-#sum.write("End-of-life Services: %s<br>\n" % (summary['serviceeol'], ))
-#sum.write("End-of-support Services: %s<br>\n" % (summary['serviceeos'], ))
+sum.write("<br>HTTP Hardening<br>\n")
+if summary.has_key('waf'):
+    sum.write("Web services protected by a WAF: %s<br>\n" % (summary['waf'], ))
+if summary.has_key('http1'):
+    sum.write("Web services that respond to HTTP/1.0 requests: %s<br>\n" % (summary['http1'], ))
+if summary.has_key('serviceversions'):
+    sum.write("Web services that identify their version: %s<br>\n" % (summary['serviceversions'], ))
+if summary.has_key('servicephp'):
+    sum.write("Web Services Utilizing PHP: %s<br>\n" % (summary['servicephp'], ))
+if summary.has_key('serviceasp'):
+    sum.write("Web Services Utilizing ASP: %s<br>\n" % (summary['serviceasp'], ))
+if summary.has_key('http200'):
+    sum.write("Web services that need to be hardened with an App-ID: %s<br>\n" % (summary['http200'], ))
+if summary.has_key('htmlforms'):
+    sum.write("HTML Forms Detected: %s<br>\n" % (summary['htmlforms'], ))
+if summary.has_key('keyleaks'):
+    sum.write("Possible API Key Leaks Detected: %s<br>\n" % (summary['keyleaks'], ))
+if summary.has_key('http3xx'):
+    sum.write("Redirects Total: %s<br>\n" % (summary['http3xx'], ))
+if summary.has_key('redirectsamehost'):
+    sum.write("Proper redirects to the same DNS host: %s<br>\n" % (summary['redirectsamehost'], ))
+if summary.has_key('redirectsameip'):
+    sum.write("Redirects to the same IP (should point to DNS name instead): %s<br>\n" % (summary['redirectsameip'], ))
+if summary.has_key('redirectdifferentiphost'):
+    sum.write("Redirects to the same domain (need lifecycle management): %s<br>\n" % (summary['redirectdifferentiphost'], ))
+if summary.has_key('redirectdifferentdomain'):
+    sum.write("Redirects to different domains (pivot targets): %s<br>\n" % (summary['redirectdifferentdomain'], ))
+if summary.has_key('http5xx'):
+    sum.write("Application/Server Errors: %s<br>\n" % (summary['http5xx'], ))
+if summary.has_key('serviceeol'):
+    sum.write("End-of-life Services: %s<br>\n" % (summary['serviceeol'], ))
+if summary.has_key('serviceeos'):
+    sum.write("End-of-support Services: %s<br>\n" % (summary['serviceeos'], ))
 
-#sum.write("<br>SSL<br>\n")
-#sum.write("Wildcard Certificates: %s<br>\n" % (summary['sslwildcard'], ))
-#sum.write("Vulnerable TLS Mail Services: %s<br>\n" % (summary['starttlsservices'], ))
-#sum.write("Self-Signed Certificates: %s<br>\n" % (summary['selfsignedservices'], ))
-#sum.write("Insecure SSL Versions: %s<br>\n" % (summary['sslerrorversion'], ))
-#sum.write("Non-compliant SSL Versions: %s<br>\n" % (summary['sslwarnversion'], ))
-#sum.write("Bad SSL Ciphers: %s<br>\n" % (summary['sslbadcipher'], ))
-#sum.write("Expired Certificates: %s<br>\n" % (summary['sslexpired'], ))
-#sum.write("Potential pivot targets identified by SSL certificate: %s<br>\n" % (summary['sslnotdomain'], ))
+sum.write("<br>SSL<br>\n")
+if summary.has_key('sslwildcard'):
+    sum.write("Wildcard Certificates: %s<br>\n" % (summary['sslwildcard'], ))
+if summary.has_key('starttlsservices'):
+    sum.write("Vulnerable TLS Mail Services: %s<br>\n" % (summary['starttlsservices'], ))
+if summary.has_key('selfsignedservices'):
+    sum.write("Self-Signed Certificates: %s<br>\n" % (summary['selfsignedservices'], ))
+if summary.has_key('sslerrorversion'):
+    sum.write("Insecure SSL Versions: %s<br>\n" % (summary['sslerrorversion'], ))
+if summary.has_key('sslwarnversion'):
+    sum.write("Non-compliant SSL Versions: %s<br>\n" % (summary['sslwarnversion'], ))
+if summary.has_key('sslwarnversion'):
+    sum.write("Weak SSL Ciphers: %s<br>\n" % (summary['sslwarnversion'], ))
+if summary.has_key('sslexpired'):
+    sum.write("Expired Certificates: %s<br>\n" % (summary['sslexpired'], ))
+if summary.has_key('sslnotdomain'):
+    sum.write("Potential pivot targets identified by SSL certificate: %s<br>\n" % (summary['sslnotdomain'], ))
 
 sum.write("<br>Vulnerabilities<br>\n")
 if summary.has_key('vulntotal'):
