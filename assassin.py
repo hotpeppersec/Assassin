@@ -5,17 +5,11 @@ import urllib2
 import json
 import apiKeys
 
-if apiKeys.dnsdbKey:
-  dnsdbKey = apiKeys.dnsdbKey
-
 if apiKeys.vtKey:
   vtKey = apiKeys.vtKey
 
 if apiKeys.shodanKey:
   shodanKey = apiKeys.shodanKey
-
-if apiKeys.GoogleSafeBrowsingKey:
-  GoogleSafeBrowsingKey = apiKeys.GoogleSafeBrowsingKey
 
 if apiKeys.GoogleMapsKey:
   GoogleMapsKey = apiKeys.GoogleMapsKey
