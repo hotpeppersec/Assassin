@@ -1,0 +1,5 @@
+apiKeys.py
+apiKeys.pyc
+*.html
+dev-ideas/*
+reports/*
