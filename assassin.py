@@ -55,32 +55,6 @@ def getDnsht(domain):
   except:
     return False
 
-def getVtdomain(domain, vtKey):
-  print("VirusTotal")
-  url='https://www.virustotal.com/vtapi/v2/domain/report?domain=%s&apikey=%s' % (domain, vtKey)
-  try:
-    jsonresponse = urllib2.urlopen(url)
-    response = json.loads(jsonresponse.read())
-    print "Received %s hosts from VirusTotal" % (len(response['subdomains']), )
-    print "Verdict: %s" % (response['Webutation domain info']['Verdict'], )
-    print "Adult Content: %s" % (response['Webutation domain info']['Adult content'], )
-    print "Safety Score: %s" % (response['Webutation domain info']['Safety score'], )
-    return response['subdomains']
-  except:
-    return False
-
-def dnsCombine(dnsht, dnsvt):
-  print "Combining and de-duplicating hosts"
-  output = []
-  if dnsht:
-    for entry in dnsht:
-      if entry not in output:
-        output.append(entry)
-  if dnsvt:
-    for entry in dnsvt:
-      if entry not in output:
-        output.append(entry)
-
   print "Combined to a total of %s hosts" % len(output)
 
   if len(output) > 0:
@@ -249,9 +223,7 @@ if domaindata:
 
 #HOSTS
 
-dnsht = getDnsht(domain)
-dnsvt = getVtdomain(domain, vtKey)
-hosts = dnsCombine(dnsht, dnsvt)
+hosts = getDnsht(domain)
 
 if not hosts:
   print "No DNS entries discovered for target domain"
