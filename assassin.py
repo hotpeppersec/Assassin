@@ -8,8 +8,6 @@ import apiKeys
 if apiKeys.shodanKey:
   shodanKey = apiKeys.shodanKey
 
-if apiKeys.GoogleMapsKey:
-  GoogleMapsKey = apiKeys.GoogleMapsKey
 
 summary = {}
 
@@ -730,43 +728,7 @@ report.close()
 
 sumfile = "%s-summary.html" % (domain.split(".")[0], )
 sum = open(sumfile, "w")
-sum.write("""<html>
-  <head>
-    <style>
-      #map {
-        height: 400px;
-        width: 800px;
-        align: center;
-       }
-    </style>
-  </head>
-  <body>
-    Global Technology Distribution<br>
-    <div id="map"></div>
-    <script>
-function initMap() {
-  var center = {lat: 10, lng: 0};
-""")
-
-
-entrycounter = 1
-if summary.has_key('mapdata'):
-    for entry in summary['mapdata']:
-        sum.write("  var point%s = {lat: %s, lng: %s};\n" % (str(entrycounter), entry['latitude'], entry['longitude']))
-        entrycounter += 1
-    sum.write("  var map = new google.maps.Map(document.getElementById('map'), {zoom: 1.75, center: center});\n")
-
-    entrycounter = 1
-    for entry in summary['mapdata']:
-        sum.write("  var marker%s = new google.maps.Marker({position: point%s, map: map});\n" % (entrycounter, entrycounter))
-        entrycounter += 1
-
-sum.write("}\n")
-sum.write("</script>\n")
-sum.write('<script async defer src="https://maps.googleapis.com/maps/api/js?key=%s&callback=initMap">\n' % (GoogleMapsKey, ))
-sum.write("</script>\n")
-
-sum.write("<br>\n")
+sum.write("<html>")
 sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
 if summary.has_key('nonprod'):
   sum.write("Non-Production Hosts: %s<br>\n" % (str(summary['nonprod']), ))
