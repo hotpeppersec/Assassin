@@ -5,9 +5,6 @@ import urllib2
 import json
 import apiKeys
 
-if apiKeys.vtKey:
-  vtKey = apiKeys.vtKey
-
 if apiKeys.shodanKey:
   shodanKey = apiKeys.shodanKey
 
