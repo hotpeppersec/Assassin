@@ -10,3 +10,5 @@ python:
 before_install:
   - sudo apt-get -qq update
   - python3 -m pip install wheel
+script:
+  - echo "coming soon"
