@@ -834,3 +834,11 @@ if summary.has_key('sslpivottargets'):
     sum.write("%s<br>\n" % (target, ))
 sum.write("</body></html>")
 sum.close()
+
+__author__     = ''
+__copyright__  = ''
+__credits__    = ['{credit_list}']
+__license__    = '{license}'
+__version__    = ''
+__maintainer__ = ''
+__email__      = ''

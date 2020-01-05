@@ -9,6 +9,6 @@ python:
   - "3.7"
 before_install:
   - sudo apt-get -qq update
-  - python3 -m pip install wheel
+  - python3 -m pip install wheel pytest jsonschema
 script:
-  - echo "coming soon"
+  - make test
