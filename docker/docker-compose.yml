@@ -1,0 +1,10 @@
+version: '3'
+services:
+    assassin:
+        hostname: assassin
+        volumes:
+          - .:/tmp/workspace
+        build:
+          context: ..
+          dockerfile: docker/Dockerfile
+    

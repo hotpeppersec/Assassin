@@ -3,3 +3,7 @@ apiKeys.pyc
 *.html
 dev-ideas/*
 reports/*
+
+.tox/
+__pycache__
+MANIFEST
