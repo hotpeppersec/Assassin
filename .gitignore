@@ -1,6 +1,6 @@
-apiKeys.py
-apiKeys.pyc
+*.pyc
 *.html
+
 dev-ideas/*
 reports/*
 
