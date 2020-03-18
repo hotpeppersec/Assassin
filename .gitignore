@@ -7,3 +7,5 @@ reports/*
 .tox/
 __pycache__
 MANIFEST
+
+apiKeys.py
