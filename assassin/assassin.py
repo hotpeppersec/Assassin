@@ -354,7 +354,7 @@ else:
                     shodan = getShodan(ip, shodanKey)
                     if shodan:
 
-                        if 'latitude' in shodan and 'longitude' in shodan):
+                        if 'latitude' in shodan and 'longitude' in shodan:
                             if not 'mapdata' in summary:
                                 summary['mapdata'] = []
                             if {"latitude": shodan['latitude'], "longitude": shodan['longitude']} not in summary['mapdata']:
@@ -665,7 +665,7 @@ else:
 
 # SSL ISSUER
 
-                                        if 'issuer' service['ssl']['cert']:
+                                        if 'issuer' in service['ssl']['cert']:
                                             report.write(
                                                 '<div class="ssl">SSL Issuer</div>\n')
                                             report.write(
@@ -923,7 +923,7 @@ if 'redirectsameip' in summary:
 if 'redirectdifferentiphost' in summary:
     sum.write("Redirects to the same domain (need lifecycle management): %s<br>\n" % (
         summary['redirectdifferentiphost'], ))
-if 'redirectdifferentdomain')in summary:
+if 'redirectdifferentdomain' in summary:
     sum.write("Redirects to different domains (pivot targets): %s<br>\n" %
               (summary['redirectdifferentdomain'], ))
 if 'http5xx' in summary:
@@ -939,7 +939,7 @@ if 'sslwildcard' in summary:
 if 'starttlsservices' in summary:
     sum.write("Vulnerable TLS Mail Services: %s<br>\n" %
               (summary['starttlsservices'], ))
-if 'selfsignedservices')in summary:
+if 'selfsignedservices' in summary:
     sum.write("Self-Signed Certificates: %s<br>\n" %
               (summary['selfsignedservices'], ))
 if 'sslerrorversion' in summary:
