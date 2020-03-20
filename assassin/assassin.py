@@ -15,6 +15,8 @@ if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
   getattr(ssl, '_create_unverified_context', None)):
     ssl._create_default_https_context = ssl._create_unverified_context
 
+import logging
+from pathlib import Path
 
 if apiKeys.shodanKey:
     shodanKey = apiKeys.shodanKey
@@ -28,6 +30,23 @@ try:
     print("Signatures loaded")
 except:
     print("Signature file is either missing or corrupt.")
+
+''' Configure logger properties '''
+__LOG_PATH = '/var/log/secops'
+__LOG_FILE = '%s/assassin.log' % (__LOG_PATH,)
+__LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+''' Configure logging '''
+# next line is python 3.5 or greater
+Path(__LOG_PATH).mkdir(parents=True, exist_ok=True)
+logger = logging.getLogger('assassinLogger')
+logger.setLevel(logging.DEBUG)
+# create file handler to log debug events
+fh = logging.FileHandler(__LOG_FILE)
+fh.setLevel(logging.DEBUG)
+formatter = logging.Formatter(__LOG_FORMAT)
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
 
 def getDomainInfo(domain):
@@ -44,26 +63,33 @@ def getDomainInfo(domain):
 
 def getDnsht(domain):
     print("Hacker Target")
-    url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain, )
+    logger.info('Hacker Target')
+    url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain)
     try:
         response = urlopen(url)
-        data = response.read().strip()
-        if data == "error check your search parameter":
+        html_response = response.read()
+        encoding = response.headers.get_content_charset('utf-8')
+        decoded_html = html_response.decode(encoding)
+        logger.debug('Hacker Target response: %s' % decoded_html)
+        if decoded_html == "error check your search parameter":
+            logger.debug('Hacker Target says bad domain name')
             return False
         else:
             output = []
-            lines = data.split("\n")
+            lines = decoded_html.split("\n")
             for line in lines:
                 fields = line.split(",")
                 host = fields[0]
                 output.append(host)
             print("Received %s hosts from Hacker Target" % (len(lines), ))
+            logger.debug('Received %s hosts from Hacker Target' % (len(lines), ))
             return output
-    except:
+    except Exception as err:
+        logger.debug('Handling run-time error: %s', (err))
         return False
 
     print("Combined to a total of %s hosts" % len(output))
-
+    logger.debug('Combined to a total of %s hosts' % len(output))
     if len(output) > 0:
         return(output)
     else:
@@ -117,8 +143,23 @@ def getShodan(ip, shodanKey):
         return False
 
 
+def ensureUtf(s):
+    """
+    A fix for py2 (unicode) py 3 (str) conversion
+    """
+    try:
+        if type(s) == unicode:
+            s = s.encode('utf8', 'ignore')
+            
+    except Exception as err:
+        logger.debug('Handling run-time error: %s', (err))
+        return False  
+    return str(s) 
+
 def checkPrivate(ip):
-    unicodeip = unicode(str(ip), "utf-8")
+    logger.info('Check private IP: %s' % ip)
+    #unicodeip = unicode(str(ip), "utf-8")
+    unicodeip = ensureUtf(ip)
     if (ipaddress.ip_address(unicodeip)):
         if (ipaddress.ip_address(unicodeip).is_private):
             return True
@@ -129,7 +170,9 @@ def checkPrivate(ip):
 
 
 def checkReserved(ip):
-    unicodeip = unicode(str(ip), "utf-8")
+    logger.info('Check reserved IP: %s' % ip)
+    #unicodeip = unicode(str(ip), "utf-8")
+    unicodeip = ensureUtf(ip)
     if (ipaddress.ip_address(unicodeip)):
         if (ipaddress.ip_address(unicodeip).is_reserved):
             return True
@@ -142,7 +185,7 @@ def checkReserved(ip):
 def getWhois(ip):
     url = "http://rdap.arin.net/registry/ip/%s" % (ip, )
     try:
-        jsonresponse = urllib2.urlopen(url)
+        jsonresponse = urllib.urlopen(url)
         response = json.loads(jsonresponse.read())
         if "name" in response:
             return response['name']
@@ -244,12 +287,14 @@ hosts = getDnsht(domain)
 
 if not hosts:
     print("No DNS entries discovered for target domain %s" % domain)
+    logger.debug('No DNS entries discovered for target domain %s' % (domain))
     report.close()
     sys.exit()
 else:
     summary['hosts'] = len(hosts)
     for host in hosts:
         print("Processing host: %s" % (host))
+        logger.debug('Processing host: %s' % (host))
         report.write('<div class="host">%s</div>\n' % (host, ))
 
 # NONPROD
