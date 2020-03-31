@@ -15,13 +15,28 @@ brew tap caskroom/cask
 brew install git
 ```
 
-## Install Docker
+## Install Docker Desktop
+[Docker Desktop](https://docs.docker.com/docker-for-mac/install/) Install overview
 
-```bash
-brew install docker
+[Download docker](https://hub.docker.com/editions/community/docker-ce-desktop-mac/) Software package
+
+Complete sofware installer with-in GUI
+
+## Configure apiKeys.py
+edit assassin/apiKey.py
+configure the various services (VirusTotal, Shodan, etc) with your personal API KEY value
+
+Change default values of apiKeys.py 
+Save file with update API key values 
+```
+vtKey = 'CHANGEME'
+shodanKey = 'CHANGEME'
+GoogleMapsKey = 'CHANGEME'
+dnsdbKey = 'CHANGEME'
+GoogleSafeBrowsingKey = 'CHANGEME'
 ```
 
-## Run the Tool
+## Run the Assassin Tool
 
 ```bash
 make docker
