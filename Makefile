@@ -1,4 +1,4 @@
-.PHONY: docker python test
+.PHONY: docker docs test
 
 REQS := requirements.txt
 
@@ -32,6 +32,10 @@ docker: ## build docker container for testing
 	@echo "Building test env with docker-compose"
 	docker-compose -f docker/docker-compose.yml build assassin
 	@docker-compose -f docker/docker-compose.yml run assassin /bin/bash
+
+docs: python ## Generate documentation
+	#sphinx-quickstart
+	cd docs && sphinx-build -b html /app/docs/source /app/docs/build
 
 python: ## setup python3
 	if [ -f 'requirements.txt' ]; then pip3 install -rrequirements.txt; fi

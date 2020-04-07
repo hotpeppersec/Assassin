@@ -1,10 +1,14 @@
 version: '3'
 services:
-    assassin:
-        hostname: assassin
-        volumes:
-          - .:/tmp/workspace
-        build:
-          context: ..
-          dockerfile: docker/Dockerfile
-    
+  assassin:
+    hostname: assassin
+    container_name: assassin
+    volumes:
+      - ..:/app
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "5000:5000"
+volumes:
+  .:

@@ -1,8 +1,8 @@
 *.pyc
 *.html
-
 dev-ideas/*
 reports/*
+docs/build/
 
 .tox/
 __pycache__
