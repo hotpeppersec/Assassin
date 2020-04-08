@@ -2,3 +2,4 @@ tox
 pylint
 jsonschema
 pytest
+coverage

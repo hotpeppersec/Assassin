@@ -1,3 +1,4 @@
+  
 vtKey = 'CHANGEME'
 shodanKey = 'CHANGEME'
 GoogleMapsKey = 'CHANGEME'

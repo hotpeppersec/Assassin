@@ -1,6 +1,8 @@
 .PHONY: docker docs test
 
-REQS := requirements.txt
+# Used for colorizing output of echo messages
+BLUE := "\\033[1\;36m"
+NC := "\\033[0m" # No color/default
 
 define PRINT_HELP_PYSCRIPT
 import re, sys
@@ -27,15 +29,21 @@ clean: ## Cleanup all the things
 	rm -rf htmlcov
 	find . -name '*.pyc' | xargs rm -rf
 	find . -name '__pycache__' | xargs rm -rf
+	rm assassin/*.html
 
-docker: ## build docker container for testing
-	@echo "Building test env with docker-compose"
+docker: python ## build docker container for testing
+	$(MAKE) print-status MSG="Building with docker-compose"
+	@if [ -f /.dockerenv ]; then $(MAKE) print-status MSG="***> Don't run make docker inside docker container <***" && exit 1; fi
 	docker-compose -f docker/docker-compose.yml build assassin
 	@docker-compose -f docker/docker-compose.yml run assassin /bin/bash
 
 docs: python ## Generate documentation
 	#sphinx-quickstart
 	cd docs && sphinx-build -b html /app/docs/source /app/docs/build
+
+print-status:
+	@:$(call check_defined, MSG, Message to print)
+	@echo "$(BLUE)$(MSG)$(NC)"
 
 python: ## setup python3
 	if [ -f 'requirements.txt' ]; then pip3 install -rrequirements.txt; fi

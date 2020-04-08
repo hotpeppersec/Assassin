@@ -4,8 +4,9 @@ dev-ideas/*
 reports/*
 docs/build/
 
+.coverage
 .tox/
 __pycache__
 MANIFEST
 
-apiKeys.py
+assassin/apiKeys.py
