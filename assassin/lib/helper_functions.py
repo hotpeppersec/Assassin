@@ -17,6 +17,12 @@ except ImportError:
 logger = logging.getLogger('assassinLogger')
 
 
+def convert_ip(ip):
+    if type(ip) != str:
+        ip = ip.decode("utf-8", "strict")
+    return ip
+
+
 def getDomainInfo(domain):
     ext = domain.split('.')
 
@@ -103,8 +109,7 @@ def getFwdDns(host):
 def getRevDns(ip):
     '''
     '''
-    if type(ip) != str:
-        ip = ip.decode("utf-8", "strict")
+    ip = convert_ip(ip)
     reverseip = ip_address(ip).reverse_pointer
     logger.debug('Checking reverse IP: %s' % reverseip)
     url = 'https://dns.google.com/resolve?name=%s&type=PTR' % (reverseip, )
@@ -115,7 +120,9 @@ def getRevDns(ip):
             answers = response["Answer"]
             for answer in answers:
                 if "data" in answer:
-                    return answer["data"].encode("ascii")
+                    if type(answer["data"]) != str:
+                      answer["data"] = answer["data"].decode("utf-8", "strict")
+                    return answer["data"]
     except:
         return False
 
@@ -126,10 +133,9 @@ def getShodan(ip, shodanKey):
         jsonresponse = urlopen(url)
         response = json.loads(jsonresponse.read())
         return response
-    except:
-        print('NOTE: Shodan does not work on Palo Alto corp network.')
-        print('Maybe try disabling Global Protect?')
-        logger.info('NOTE: Shodan does not work on Palo Alto corp network.')
+    except Exception as e:
+        print('Shodan error: %s' % e)
+        logger.info('Shodan error: %s' % e)
         return False
 
 
@@ -137,8 +143,7 @@ def checkPrivate(ip):
     '''
     Determine if an IPv4 address is private
     '''
-    if type(ip) != str:
-        ip = ip.decode("utf-8", "strict")
+    ip = convert_ip(ip)
     logger.debug('Check private IP: %s' % ip)
     if (ipaddress.ip_address(ip).is_private):
         return True
@@ -150,8 +155,7 @@ def checkReserved(ip):
     '''
     Determine if an IPv4 address is reserved
     '''
-    if type(ip) != str:
-        ip = ip.decode("utf-8", "strict")
+    ip = convert_ip(ip)
     logger.info('Check reserved IP: %s' % ip)
     if (ipaddress.ip_address(ip).is_reserved):
         return True

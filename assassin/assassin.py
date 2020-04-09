@@ -94,12 +94,14 @@ def main():
             summary['ips'] = 0
           summary['ips'] += 1
           for ip in ips:
+            if type(ip) != str:
+              ip = ip.decode("utf-8", "strict")
             report.write('<div class="ip">IP: %s</div>\n' % (ip, ))
             report_ip(report, domain, ip, summary)
             report_whois(report,ip)
             shodan = getShodan(ip, shodanKey)
             if shodan:
-              report_shodan(report, shodan, summary)
+              report_shodan(report, domain, ip, shodan, summary)
     close_report(report)
     # Generate the Summary
     sumfile = "%s-summary.html" % (domain.split(".")[0], )

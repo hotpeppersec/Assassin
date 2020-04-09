@@ -5,6 +5,7 @@ import logging
 # attach logger
 logger = logging.getLogger('assassinLogger')
 
+
 def generate_summary(sum, summary):
     logger.debug('Generating summary file')
     sum.write("<html>")

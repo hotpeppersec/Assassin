@@ -14,6 +14,17 @@ import logging
 # attach logger
 logger = logging.getLogger('assassinLogger')
 
+# move this to a better place
+detects = {}
+try:
+    detectjson = open("serviceDetections.json", "r")
+    detectdata = json.load(detectjson)
+    detects = detectdata['service detections']
+    print("Signatures loaded")
+    logger.debug('Signatures loaded')
+except:
+    print("Signature file is either missing or corrupt.")
+    logger.debug('Signature file is either missing or corrupt')
 
 
 def report_header(report, domain):
@@ -130,7 +141,8 @@ def check_non_prod(report, host, summary):
 
 def report_ip(report, domain, ip, summary):
     '''
-    '''
+    '''    
+    ip = convert_ip(ip)
     logger.debug('Create report for IP: %s' % ip)
     if checkPrivate(ip) or checkReserved(ip):
         if checkPrivate(ip):
@@ -196,24 +208,17 @@ def report_ip(report, domain, ip, summary):
 def report_whois(report,ip):
     '''
     '''
-    logger.debug('Add wohis to report for IP: %s' % ip)
+    ip = convert_ip(ip)
+    logger.debug('Add whois to report for IP: %s' % ip)
     whois = getWhois(ip)
     if whois:
         report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
 
 
-def report_shodan(report, shodan, summary):
-    # SHODAN
+def report_shodan(report, domain, ip, shodan, summary):
+    '''
+    '''
     logger.debug('shodan')
-
-    # move this to a better place
-    try:
-        detectjson = open("serviceDetections.json", "r")
-        detectdata = json.load(detectjson)
-        detects = detectdata['service detections']
-        print("Signatures loaded")
-    except:
-        print("Signature file is either missing or corrupt.")
     
     if 'latitude' in shodan and 'longitude' in shodan:
         if not 'mapdata' in summary:
@@ -225,8 +230,10 @@ def report_shodan(report, shodan, summary):
     if 'data' in shodan:
         for service in shodan['data']:
             if not 'services' in summary:
+                logger.debug('Reset service summary counter')
                 summary['services'] = 0
             summary['services'] += 1
+            logger.debug('Increment service summary counter')
 
             report.write('<div class="service">\n')
             if 'transport' in service and 'port' in service and 'product' in service:
@@ -255,14 +262,13 @@ def report_shodan(report, shodan, summary):
                         summary['starttlsservices'] += 1
 
             if 'data' in service:
-                report.write(
-                    '<div class="data"><pre>\n')
-                report.write(service['data'].encode(
-                    'ascii', 'ignore').strip().replace("<", "&lt").replace(">", "&gt"))
+                report.write('<div class="data"><pre>\n')
+                logger.debug('Writing service data: %s' % service['data'])
+                report.write(service['data'].strip().replace("<", "&lt").replace(">", "&gt"))
                 report.write('\n</pre></div>\n')
 
                 # DETECT SERVICES
-                for line in service['data'].encode('ascii', 'ignore').split('\n'):
+                for line in service['data'].split('\n'):
                     for detect in detects:
                         for signature in detect['signatures']:
                             if signature in line:
@@ -294,14 +300,11 @@ def report_shodan(report, shodan, summary):
                         summary['servicemail'] = 0
                     summary['servicemail'] += 1
 
-# HTTP
-
-                if "HTTP" in service['data'].encode('ascii', 'ignore').split('\n')[0]:
-                    linezero = service['data'].encode(
-                        'ascii', 'ignore').split('\n')[0]
+                # HTTP
+                if "HTTP" in service['data'].split('\n')[0]:
+                    linezero = service['data'].split('\n')[0]
                     if len(linezero.split(' ')) > 1:
-                        httpstatus = service['data'].encode(
-                            'ascii', 'ignore').split('\n')[0].split(' ')[1]
+                        httpstatus = service['data'].split('\n')[0].split(' ')[1]
                         if len(httpstatus) == 3:
                             if httpstatus[0] == "3":
                                 if 'httpredirect' in summary:
@@ -378,14 +381,12 @@ def report_shodan(report, shodan, summary):
             if 'http' in service:
                 if 'html' in service['http']:
                     if service['http']['html'] is not None:
-                        htmllines = service['http']['html'].encode(
-                            'ascii', 'ignore').strip().split("\n")
+                        htmllines = service['http']['html'].split("\n")
                         report.write(
                             '<div class="data"><pre>\n')
                         for line in htmllines:
                             if len(line.strip().rstrip("\n")) > 0:
-                                report.write("%s\n" % (line.encode('ascii', 'ignore').replace(
-                                    "<", "&lt").replace(">", "&gt"), ))
+                                report.write("%s\n" % (line.replace("<", "&lt").replace(">", "&gt"), ))
                                 if ("&key=" in line.lower() or "apikey" in line.lower()) and ("googleapis.com" not in line.lower()):
                                     report.write(
                                         '</pre></dev>\n')
@@ -439,24 +440,20 @@ def report_shodan(report, shodan, summary):
                 if 'robots' in service['http']:
                     robots = service['http']['robots']
                     if robots is not None:
-                        if len(robots.encode('ascii', 'ignore').strip()) > 0:
+                        if len(robots.strip()) > 0:
                             report.write(
                                 '<div class="ssl">Robots</div>\n')
-                            report.write(
-                                '<div class="ssldata">\n')
+                            report.write('<div class="ssldata">\n')
                             for robotline in robots.split('\n'):
-                                report.write('%s<br>\n' % (
-                                    robotline.strip().encode('ascii', 'ignore'), ))
+                                report.write('%s<br>\n' % robotline.strip())
                             report.write('</div>\n')
 
 # SSL
 
             if 'ssl' in service:
-                #                  report.write('%s<br>\n' % (service['ssl'], ))
+                #report.write('%s<br>\n' % (service['ssl'], ))
                 if 'cert' in service['ssl']:
-
                     # SSL SUBJECT
-
                     if 'subject' in service['ssl']['cert']:
                         report.write(
                             '<div class="ssl">SSL Subject</div>\n')
@@ -464,23 +461,22 @@ def report_shodan(report, shodan, summary):
                             '<div class="ssldata">\n')
                         subject = service['ssl']['cert']['subject']
                         if 'OU' in subject:
-                            report.write('OU: %s<br>\n' % (
-                                subject['OU'].encode('ascii', 'ignore'), ))
+                            report.write('OU: %s<br>\n' % subject['OU'])
                         if 'emailAddress' in subject:
                             report.write('Email: %s<br>\n' % (
-                                subject['emailAddress'].encode('ascii', 'ignore'), ))
+                                subject['emailAddress']))
                         if 'O' in subject:
                             report.write('O: %s<br>\n' % (
-                                subject['O'].encode('ascii', 'ignore'), ))
+                                subject['O']))
                         if 'CN' in subject:
                             report.write('CN: %s<br>\n' % (
-                                subject['CN'].encode('ascii', 'ignore'), ))
+                                subject['CN']))
                             report.write('</div>\n')
                             if domain not in subject['CN'].lower():
                                 if not 'sslnotdomain' in summary:
                                     summary['sslnotdomain'] = 0
                                 summary['sslnotdomain'] += 1
-                                pivottarget = subject['CN'].encode('ascii', 'ignore').lower().lstrip(
+                                pivottarget = subject['CN'].lower().lstrip(
                                     '*.').rstrip('/').replace('www.', '')
                                 if ip == pivottarget:
                                     report.write(
@@ -531,23 +527,22 @@ def report_shodan(report, shodan, summary):
                         issuer = service['ssl']['cert']['issuer']
                         if 'OU' in issuer:
                             report.write('OU: %s<br>\n' % (
-                                issuer['OU'].encode('ascii', 'ignore'), ))
+                                issuer['OU']))
                         if 'emailAddress' in issuer:
                             report.write('Email: %s<br>\n' % (
-                                issuer['emailAddress'].encode('ascii', 'ignore'), ))
+                                issuer['emailAddress']))
                         if 'O' in issuer:
                             report.write('O: %s<br>\n' % (
-                                issuer['O'].encode('ascii', 'ignore'), ))
+                                issuer['O']))
                         if 'CN' in issuer:
                             report.write('CN: %s<br>\n' % (
-                                issuer['CN'].encode('ascii', 'ignore'), ))
+                                issuer['CN']))
                         report.write('</div>\n')
 
 # SSL CERT EXPIRATION
 
                     if 'expires' in service['ssl']['cert']:
-                        expires = service['ssl']['cert']['expires'].encode(
-                            'ascii', 'ignore')
+                        expires = service['ssl']['cert']['expires']
                         certyear = expires[0:4]
                         certmonth = expires[4:6]
                         certday = expires[6:8]
@@ -579,9 +574,12 @@ def report_shodan(report, shodan, summary):
                                 '<span class="sslerror">%s</span>\n' % (version, ))
                             report.write(
                                 '<div class="ssldata">\n')
-                            if 'sslerrorversion' in summary:
+                            if not 'sslerrorversion' in summary:
+                                logger.debug('Reset sslerrorversion counter')
                                 summary['sslerrorversion'] = 0
-                            summary['sslerrorversion'] += 1
+                            else:
+                                logger.debug('Increment sslerrorversion counter')
+                                summary['sslerrorversion'] += 1
                         elif version.strip() in warnversions:
                             report.write('</div>\n')
                             report.write(

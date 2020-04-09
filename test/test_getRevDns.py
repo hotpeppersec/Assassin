@@ -10,7 +10,7 @@ from assassin.lib.helper_functions import getRevDns
 
 def test_getRevDns_com():
   response = getRevDns('173.245.58.51')
-  assert b'ns1.digitalocean.com.' in response
+  assert 'ns1.digitalocean.com.' in response
 
 
 __author__     = 'Franklin Diaz'
