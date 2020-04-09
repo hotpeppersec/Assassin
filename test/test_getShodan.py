@@ -4,7 +4,7 @@
 """
 
 import pytest
-from assassin.assassin import getShodan
+from assassin.lib.helper_functions import getShodan
 import assassin.apiKeys
 
 

@@ -5,7 +5,7 @@
 
 import pytest
 import json
-from assassin.assassin import getRevDns
+from assassin.lib.helper_functions import getRevDns
 
 
 def test_getRevDns_com():

@@ -5,7 +5,7 @@
 
 import pytest
 import json
-from assassin.assassin import getDomainInfo
+from assassin.lib.helper_functions import getDomainInfo
 
 
 def test_getDomaininfo_com():

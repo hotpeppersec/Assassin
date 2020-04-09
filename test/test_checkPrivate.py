@@ -4,7 +4,7 @@
 """
 
 import pytest
-from assassin.assassin import checkPrivate
+from assassin.lib.helper_functions import checkPrivate
 
 
 def test_checkPrivate_false():

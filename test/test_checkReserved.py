@@ -4,7 +4,7 @@
 """
 
 import pytest
-from assassin.assassin import checkReserved
+from assassin.lib.helper_functions import checkReserved
 
 
 def test_checkReserved_false():

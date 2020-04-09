@@ -5,7 +5,7 @@
 
 import pytest
 import json
-from assassin.assassin import getFwdDns
+from assassin.lib.helper_functions import getFwdDns
 
 
 def test_getFwdDns_com_str():

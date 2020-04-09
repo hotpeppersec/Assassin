@@ -4,7 +4,7 @@
 """
 
 import pytest
-from assassin.assassin import getDnsht
+from assassin.lib.helper_functions import getDnsht
 
 
 def test_getDnsht_com():

@@ -8,7 +8,7 @@ import json
 from jsonschema import validate
 
 class TestSum(unittest.TestCase):
-    my_json_file = 'assassin/serviceDetections.json'
+    my_json_file = 'assassin/lib/serviceDetections.json'
 
     def test_json(self):
         """

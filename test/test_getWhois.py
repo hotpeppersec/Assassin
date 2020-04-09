@@ -4,7 +4,7 @@
 """
 
 import pytest
-from assassin.assassin import getWhois
+from assassin.lib.helper_functions import getWhois
 
 
 def test_getWhois():
