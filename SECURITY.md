@@ -5,11 +5,13 @@
 
 ## Supported Versions
 
-All versions of this project are currently being supported with security updates.
+Only the latest version of this project is being supported with security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1     | :white_check_mark: |              |
+| 0.1     | :x: |
+| 0.2     | :x: |
+| 1.0     | :white_check_mark: |
 
 ## Reporting a Vulnerability
 

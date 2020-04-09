@@ -20,7 +20,7 @@ def test_getFwdDns_com_byte():
 __author__     = 'Franklin Diaz'
 __copyright__  = ''
 __credits__    = ['{credit_list}']
-__license__    = '{license}'
+__license__    = 'http://www.apache.org/licenses/LICENSE-2.0'
 __version__    = ''
 __maintainer__ = ''
 __email__      = 'fdiaz@paloaltonetworks.com'

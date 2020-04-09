@@ -43,10 +43,10 @@ class Logger:
     return self.logger
 
 
-__author__ = ''
+__author__ = 'Franklin Diaz'
 __copyright__ = ''
-__credits__ = ['@p0lr_']
-__license__ = 'MIT'
+__credits__ = ['']
+__license__ = 'http://www.apache.org/licenses/LICENSE-2.0'
 __version__ = ''
 __maintainer__ = ''
 __email__ = 'fdiaz@paloaltonetworks.com'

@@ -718,3 +718,11 @@ def close_report(report):
     report.write('</body>\n')
     report.write('</html>\n')
     report.close()
+
+__author__ = 'Franklin Diaz'
+__copyright__ = ''
+__credits__ = ['']
+__license__ = 'http://www.apache.org/licenses/LICENSE-2.0'
+__version__ = ''
+__maintainer__ = ''
+__email__ = 'fdiaz@paloaltonetworks.com'

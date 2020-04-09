@@ -134,3 +134,10 @@ def generate_summary(sum, summary):
     sum.write("</body></html>")
     sum.close()
 
+__author__ = 'Franklin Diaz'
+__copyright__ = ''
+__credits__ = ['']
+__license__ = 'http://www.apache.org/licenses/LICENSE-2.0'
+__version__ = ''
+__maintainer__ = ''
+__email__ = 'fdiaz@paloaltonetworks.com'
