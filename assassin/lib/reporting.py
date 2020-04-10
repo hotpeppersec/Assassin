@@ -17,7 +17,7 @@ logger = logging.getLogger('assassinLogger')
 # move this to a better place
 detects = {}
 try:
-    detectjson = open("serviceDetections.json", "r")
+    detectjson = open("lib/serviceDetections.json", "r")
     detectdata = json.load(detectjson)
     detects = detectdata['service detections']
     print("Signatures loaded")
