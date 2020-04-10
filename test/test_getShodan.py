@@ -8,7 +8,7 @@ from assassin.lib.helper_functions import getShodan
 import assassin.apiKeys
 
 
-def test_getShodan():
+def test_getShodan(capsys):
   if assassin.apiKeys.shodanKey:
     local_shodanKey = assassin.apiKeys.shodanKey
     print('Found Shodan Key: %s' % local_shodanKey)

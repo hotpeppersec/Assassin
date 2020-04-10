@@ -5,16 +5,14 @@
 
 import pytest
 import json
+from assassin.lib.helper_functions import validate_ip
 from assassin.lib.helper_functions import getFwdDns
 
 
-def test_getFwdDns_com_str():
-  response = getFwdDns('www.microsoft.com')
-  assert b'www.microsoft.com-c-3.edgekey.net.' in response
-
-def test_getFwdDns_com_byte():
-  response = getFwdDns(b'www.microsoft.com')
-  assert b'www.microsoft.com-c-3.edgekey.net.' in response
+def test_getFwdDns_com_str(capsys):
+  response = []
+  response = getFwdDns('www.bitsmasher.net')
+  assert '178.62.60.55' in response
 
 
 __author__     = 'Franklin Diaz'

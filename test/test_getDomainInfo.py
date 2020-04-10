@@ -5,17 +5,18 @@
 
 import pytest
 import json
+from assassin.lib.helper_functions import validate_ip
 from assassin.lib.helper_functions import getDomainInfo
 
 
-def test_getDomaininfo_com():
+def test_getDomaininfo_com(capsys):
   response = getDomainInfo('cnn.com')
   temp = json.dumps(response)
   json_data = json.loads(temp)
   assert 'objectClassName' in json_data
 
 
-def test_getDomaininfo_net():
+def test_getDomaininfo_net(capsys):
   response = getDomainInfo('bitsmasher.net')
   temp = json.dumps(response)
   json_data = json.loads(temp)

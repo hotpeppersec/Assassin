@@ -7,23 +7,48 @@ import pytest
 from assassin.lib.helper_functions import getDnsht
 
 
-def test_getDnsht_com():
+def test_getDnsht_bad(capsys):
   '''
-  Their API will rate limit us without auth
+  Test a bad TLD
   '''
+  response = []
+  response = getDnsht('com.zzz')
+  assert 'error check your search parameter' in response
+
+
+def test_getDnsht_com(capsys):
+  '''
+  Test a .com 
+  Their API will rate limit us without auth 
+  'API count exceeded - Increase Quota with Membership'
+
+  Success case returns var: output
+
+  Should check on the cound in output
+  '''
+  response = []
   response = getDnsht('cnn.com')
-  if not 'API count exceeded - Increase Quota with Membership' in response:
-    assert 'proxy.cnn.com' in response
+  assert 'proxy.cnn.com' in response
 
 
-def test_getDnsht_net():
+def test_getDnsht_net(capsys):
   '''
+  Test a .net 
   Their API will rate limit us without auth
-  '''
-  response = getDnsht('bitsmasher.net')
-  if not 'API count exceeded - Increase Quota with Membership' in response:
-    assert 'bitsmasher.net' in response
 
+  Success case returns var: output
+  Should check on the cound in output
+  '''
+  response = []
+  response = getDnsht('bitsmasher.net')
+  assert 'bitsmasher.net' in response
+
+"""
+def test_bad_decoded_html(capsys):
+  '''
+  Hacker target can't find domain
+  '''
+"""
 
 __author__     = 'Franklin Diaz'
 __copyright__  = ''

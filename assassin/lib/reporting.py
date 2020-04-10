@@ -144,19 +144,18 @@ def report_ip(report, domain, ip, summary):
     '''    
     ip = convert_ip(ip)
     logger.debug('Create report for IP: %s' % ip)
-    if checkPrivate(ip) or checkReserved(ip):
-        if checkPrivate(ip):
-            if not 'privateips' in summary:
-                summary['privateips'] = 0
-            summary['privateips'] += 1
-            report.write(
-                '<span class="iperror">Private</span>')
-        if checkReserved(ip):
-            if not 'reservedips' in summary:
-                summary['reservedips'] = 0
-            summary['reserverips'] += 1
-            report.write(
-                '<span class="iperror">Reserved</span>')
+    if checkPrivate(ip):
+        if not 'privateips' in summary:
+            summary['privateips'] = 0
+        summary['privateips'] += 1
+        report.write(
+            '<span class="iperror">Private</span>')
+    if checkReserved(ip):
+        if not 'reservedips' in summary:
+            summary['reservedips'] = 0
+        summary['reserverips'] += 1
+        report.write(
+            '<span class="iperror">Reserved</span>')
     else:
         # REVERSE DNS
         reverse = getRevDns(ip)

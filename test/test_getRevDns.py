@@ -5,10 +5,12 @@
 
 import pytest
 import json
+from assassin.lib.helper_functions import validate_ip
 from assassin.lib.helper_functions import getRevDns
 
 
-def test_getRevDns_com():
+def test_getRevDns_com(capsys):
+  response = []
   response = getRevDns('173.245.58.51')
   assert 'ns1.digitalocean.com.' in response
 

@@ -86,6 +86,7 @@ def main():
         print("Processing host: %s" % (host))
         logger.debug('Processing host: %s' % (host))
         report.write('<div class="host">%s</div>\n' % (host, ))
+        logger.debug('Calling check_non_prod for host: %s' % (host, ))
         check_non_prod(report, host, summary)
         # hostname/domain/URL tags will go here in the future
         ips = getFwdDns(host)
@@ -94,18 +95,22 @@ def main():
             summary['ips'] = 0
           summary['ips'] += 1
           for ip in ips:
-            if type(ip) != str:
-              ip = ip.decode("utf-8", "strict")
+            ip = convert_ip(ip)
             report.write('<div class="ip">IP: %s</div>\n' % (ip, ))
+            logger.debug('Calling report_ip: %s' % (ip))
             report_ip(report, domain, ip, summary)
+            logger.debug('Calling report_whois: %s' % (ip))
             report_whois(report,ip)
+            logger.debug('Calling getShodan: %s' % (ip))
             shodan = getShodan(ip, shodanKey)
             if shodan:
+              logger.debug('Calling report_shodan: %s %s' % (domain,ip))
               report_shodan(report, domain, ip, shodan, summary)
     close_report(report)
     # Generate the Summary
     sumfile = "%s-summary.html" % (domain.split(".")[0], )
     sum = open(sumfile, "w")
+    logger.debug('Calling generate_summary')
     generate_summary(sum, summary)
 
 
