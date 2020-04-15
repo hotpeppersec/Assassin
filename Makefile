@@ -29,6 +29,7 @@ clean: ## Cleanup all the things
 	rm -rf htmlcov
 	find . -name '*.pyc' | xargs rm -rf
 	find . -name '__pycache__' | xargs rm -rf
+	cd docs && make clean && cd -
 	rm assassin/*.html
 
 docker: python ## build docker container for testing
@@ -39,7 +40,7 @@ docker: python ## build docker container for testing
 
 docs: python ## Generate documentation
 	#sphinx-quickstart
-	cd docs && sphinx-build -b html /app/docs/source /app/docs/build
+	cd docs && make html
 
 print-status:
 	@:$(call check_defined, MSG, Message to print)

@@ -1,8 +1,13 @@
+# Ignore VS Code configs.
+.vscode/*
+
+.DS_store
+
 *.pyc
 *.html
 dev-ideas/*
 reports/*
-docs/build/
+docs/_build/
 
 .coverage
 .tox/

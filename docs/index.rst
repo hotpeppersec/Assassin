@@ -6,11 +6,27 @@
 Welcome to assassin's documentation!
 ====================================
 
+.. image:: images/panw-logo-bw.png
+   :align: center
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: introduction
+   
+   00-introduction/introduction
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: setup
+
+   01-setup/quickstart
+   01-setup/development
 
 Indices and tables
 ==================
