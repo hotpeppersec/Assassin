@@ -119,13 +119,15 @@ def getFwdDns(host):
         answers = response["Answer"]
         for answer in answers:
             if "data" in answer:
-                validate_ip(answer["data"])
-                try:
-                    logging.debug('getFwdDns adding to answers: %s ' % answer["data"])
-                    output.append(answer["data"])
-                except Exception as e:
-                    logging.debug('Exception in getFwdDns: %s' % e)
-                    pass
+                if validate_ip(answer["data"]):
+                    try:
+                        logging.debug('getFwdDns adding to answers: %s ' % answer["data"])
+                        output.append(answer["data"])
+                    except Exception as e:
+                        logging.debug('Exception in getFwdDns: %s' % e)
+                        pass
+                else:
+                    return False
     return output
 
 

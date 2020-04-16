@@ -44,6 +44,12 @@ logging.basicConfig(
 summary = {}
 
 def main():
+
+    '''
+    Configure logger
+    '''
+    Path("/var/log/secops").mkdir(parents=True, exist_ok=True)
+
     domain = input("What domain would you like to search (.com/.net)? ")
     reportfile = "%s-detail.html" % (domain.split(".")[0], )
     report = open(reportfile, "w")
@@ -83,7 +89,7 @@ def main():
             shodan = getShodan(ip, shodanKey)
             if shodan:
               logging.debug('Calling report_shodan: %s %s' % (domain,ip))
-              report_shodan(report, domain, ip, shodan, summary)
+              report_shodan(report, domain, ip, host, shodan, summary)
     close_report(report)
     # Generate the Summary
     sumfile = "%s-summary.html" % (domain.split(".")[0], )

@@ -217,7 +217,7 @@ def report_whois(report,ip):
         report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
 
 
-def report_shodan(report, domain, ip, shodan, summary):
+def report_shodan(report, domain, ip, host, shodan, summary):
     '''
     '''
     logging.debug('shodan')
