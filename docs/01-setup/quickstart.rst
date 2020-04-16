@@ -48,6 +48,15 @@ Configure "apiKeys.py"
     dnsdbKey = 'CHANGEME'
     GoogleSafeBrowsingKey = 'CHANGEME'
 
+Disable Global Protect
+----------------------
+
+If the operator runs the tool with Global Protect enabled, 
+the Shodan portion of the tool is blocked. 
+
+- The console will show HTTP 503 errors.
+- The report output will be incomplete.
+
 Run the Assassin Tool
 ---------------------
 
@@ -56,3 +65,14 @@ Run the Assassin Tool
     make docker
     cd assassin
     python assassin.py
+
+Viewing Reports
+---------------
+
+Two `.html` files (a detail file and a summary file) will be
+written to /app/assassin directory with the results of your
+scans. These files should persist even if the operator exits
+the Docker container. 
+
+To remove these files, execute the `make clean` option from 
+the top level of the repo directory.

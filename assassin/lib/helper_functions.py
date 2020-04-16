@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import sys
 import json
 from ipaddress import ip_address
@@ -13,11 +12,17 @@ except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen
 
+'''
+Configure logger
+'''
+import logging
+from pathlib import Path
+Path("/var/log/secops").mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     filename="/var/log/secops/assassin.log",
     level=logging.DEBUG,
-    format="%(asctime)s:%(levelname)s:%(message)s"
-    )
+    format="[%(asctime)s] [%(filename)s:%(lineno)s - %(funcName)5s() - %(processName)s] %(levelname)s - %(message)s"
+)
 
 
 def convert_ip(ip):

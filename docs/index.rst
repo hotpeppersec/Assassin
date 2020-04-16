@@ -28,6 +28,13 @@ Welcome to assassin's documentation!
    01-setup/quickstart
    01-setup/development
 
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: setup
+
+   02-troubleshooting/troubleshooting
+
 Indices and tables
 ==================
 

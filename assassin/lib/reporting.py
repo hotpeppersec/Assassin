@@ -217,7 +217,7 @@ def report_whois(report,ip):
         report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
 
 
-def report_shodan(report, domain, ip, host, shodan, summary):
+def report_shodan(report, domain, ip, host, hosts, shodan, summary):
     '''
     '''
     logging.debug('shodan')
@@ -401,14 +401,15 @@ def report_shodan(report, domain, ip, host, shodan, summary):
                                     summary['keyleaks'] += 1
                                 if 'a href="' in line.lower() and ("http://" in line.lower() or "https://" in line.lower()):
                                     # print line
+                                    logging.debug("line from report_shodan(): %s" % line)
 
                                     linkhost = line.lower().replace(">", "").replace("<", "").split('a href="')[
                                         1].split('"')[0].replace("http://", "").replace("https://", "").split("/")[0]
 
                                     if domain in linkhost:
                                         if linkhost not in hosts:
-                                            print(
-                                                "Discovered additional host from HTML link: %s" % (linkhost, ))
+                                            print("Discovered additional host from HTML link: %s" % (linkhost, ))
+                                            logging.debug("Discovered additional host from HTML link: %s" % (linkhost, ))
                                             hosts.append(
                                                 linkhost)
                                     else:
@@ -420,6 +421,7 @@ def report_shodan(report, domain, ip, host, shodan, summary):
                                                 linkhost)
                                             print(
                                                 "New potential pivot from link: %s" % (linkhost, ))
+                                            logging.debug("New potential pivot from link: %s" % (linkhost, ))
 
 # HTML FORMS
 

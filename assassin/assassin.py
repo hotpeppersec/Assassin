@@ -3,8 +3,6 @@
 """
 Find the latest version here: https://github.com/wwce/Assassin
 """
-import logging
-from pathlib import Path
 import json
 
 import sys
@@ -35,21 +33,21 @@ except ImportError:
 if apiKeys.shodanKey:
   shodanKey = apiKeys.shodanKey
 
+'''
+Configure logger
+'''
+import logging
+from pathlib import Path
+Path("/var/log/secops").mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     filename="/var/log/secops/assassin.log",
     level=logging.DEBUG,
     format="[%(asctime)s] [%(filename)s:%(lineno)s - %(funcName)5s() - %(processName)s] %(levelname)s - %(message)s"
-    )
+)
 
 summary = {}
 
 def main():
-
-    '''
-    Configure logger
-    '''
-    Path("/var/log/secops").mkdir(parents=True, exist_ok=True)
-
     domain = input("What domain would you like to search (.com/.net)? ")
     reportfile = "%s-detail.html" % (domain.split(".")[0], )
     report = open(reportfile, "w")
@@ -89,7 +87,7 @@ def main():
             shodan = getShodan(ip, shodanKey)
             if shodan:
               logging.debug('Calling report_shodan: %s %s' % (domain,ip))
-              report_shodan(report, domain, ip, host, shodan, summary)
+              report_shodan(report, domain, ip, host, hosts, shodan, summary)
     close_report(report)
     # Generate the Summary
     sumfile = "%s-summary.html" % (domain.split(".")[0], )
