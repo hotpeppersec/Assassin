@@ -13,8 +13,11 @@ except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen
 
-# attach logger
-logger = logging.getLogger('assassinLogger')
+logging.basicConfig(
+    filename="/var/log/secops/assassin.log",
+    level=logging.DEBUG,
+    format="%(asctime)s:%(levelname)s:%(message)s"
+    )
 
 
 def convert_ip(ip):
@@ -22,7 +25,7 @@ def convert_ip(ip):
     Convert bytes to utf-8
     '''
     if type(ip) != str:
-        logger.debug('Converting ip: %s' % ip)
+        logging.debug('Converting ip: %s' % ip)
         ip = ip.decode("utf-8", "strict")
     return ip
 
@@ -34,10 +37,10 @@ def validate_ip(ip):
     try:
         ipaddress.ip_address(ip)
     except ValueError as e:
-        logger.debug('Failed validate_ip: %s' % (ip))
-        logger.debug('Exception: %s' % e)
+        logging.debug('Failed validate_ip: %s' % (ip))
+        logging.debug('Exception: %s' % e)
         return False
-    logger.debug('Successful validate_ip: %s' % (ip))
+    logging.debug('Successful validate_ip: %s' % (ip))
     return True
 
 
@@ -45,7 +48,7 @@ def getDomainInfo(domain):
     ext = domain.split('.')
 
     print('Lookup %s.%s via Verisign' % (ext[0], ext[1]))
-    logger.info('Lookup %s.%s via Verisign' % (ext[0], ext[1]))
+    logging.info('Lookup %s.%s via Verisign' % (ext[0], ext[1]))
 
     if ext[1] == "com":
         url = "https://rdap.verisign.com/com/v1/domain/%s" % (domain)
@@ -54,11 +57,11 @@ def getDomainInfo(domain):
     else:
         print('See https://www.verisign.com/en_US/domain-names/registration-data-access-protocol/index.xhtml for documentation.')
         sys.exit()
-    logger.debug('Checking %s with URL: %s' % (ext[1], url))
+    logging.debug('Checking %s with URL: %s' % (ext[1], url))
     try:
         jsonresponse = urlopen(url)
         response = json.loads(jsonresponse.read())
-        logger.debug(response)
+        logging.debug(response)
         return response
     except Exception as e:
         print(e)
@@ -67,7 +70,7 @@ def getDomainInfo(domain):
 
 def getDnsht(domain):
     print("Hacker Target")
-    logger.info('Hacker Target')
+    logging.info('Hacker Target')
     url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain)
     # we don't have a key for hacker target
     # url = "https://api.hackertarget.com/dnslookup/?q=%s&apikey=%s" % (domain,htKey)
@@ -76,12 +79,12 @@ def getDnsht(domain):
         html_response = response.read()
         encoding = response.headers.get_content_charset('utf-8')
         decoded_html = html_response.decode(encoding, 'ignore')
-        logger.debug('Hacker Target response: %s' % decoded_html)
+        logging.debug('Hacker Target response: %s' % decoded_html)
     except Exception as err:
-        logger.debug('Handling run-time error: %s', (err))
+        logging.debug('Handling run-time error: %s', (err))
         return ("Exception: %s" % err)
     if decoded_html == "error check your search parameter":
-        logger.debug('Hacker Target says bad domain name')
+        logging.debug('Hacker Target says bad domain name')
         return 'error check your search parameter'
     else:
         output = []
@@ -91,9 +94,9 @@ def getDnsht(domain):
             host = fields[0]
             output.append(host)
         print("Received %s hosts from Hacker Target" % (len(lines), ))
-        logger.debug('Received %s hosts from Hacker Target' %  (len(lines), ))
+        logging.debug('Received %s hosts from Hacker Target' %  (len(lines), ))
         print("Combined to a total of %s hosts" % len(output))
-        logger.debug('Combined to a total of %s hosts' % len(output))
+        logging.debug('Combined to a total of %s hosts' % len(output))
         if len(output) > 0:
             return(output)
         else:
@@ -103,14 +106,14 @@ def getDnsht(domain):
 def getFwdDns(host):
     if type(host) != str:
         host = host.decode("utf-8", "strict")
-    logger.debug('Checking %s in getFwdDns' % host)
+    logging.debug('Checking %s in getFwdDns' % host)
     output = []
     url = 'https://dns.google.com/resolve?name=%s&type=A' % (host, )
     try:
         jsonresponse = urlopen(url)
         response = json.loads(jsonresponse.read())
     except Exception as e:
-        logger.debug('Exception in getFwdDns: %s' % e)
+        logging.debug('Exception in getFwdDns: %s' % e)
         return ('Exception in getFwdDns: %s' % e)
     if 'Answer' in response:
         answers = response["Answer"]
@@ -118,10 +121,10 @@ def getFwdDns(host):
             if "data" in answer:
                 validate_ip(answer["data"])
                 try:
-                    logger.debug('getFwdDns adding to answers: %s ' % answer["data"])
+                    logging.debug('getFwdDns adding to answers: %s ' % answer["data"])
                     output.append(answer["data"])
                 except Exception as e:
-                    logger.debug('Exception in getFwdDns: %s' % e)
+                    logging.debug('Exception in getFwdDns: %s' % e)
                     pass
     return output
 
@@ -131,13 +134,13 @@ def getRevDns(ip):
     '''
     ip = convert_ip(ip)
     reverseip = ip_address(ip).reverse_pointer
-    logger.debug('Checking reverse IP: %s' % reverseip)
+    logging.debug('Checking reverse IP: %s' % reverseip)
     url = 'https://dns.google.com/resolve?name=%s&type=PTR' % (reverseip, )
     try:
         jsonresponse = urlopen(url)
         response = json.loads(jsonresponse.read())
     except Exception as e:
-        logger.debug('Exception in getRevDns: %s' % e)
+        logging.debug('Exception in getRevDns: %s' % e)
         return ('Exception in getRevDns: %s' % e)
     if "Answer" in response:
         answers = response["Answer"]
@@ -145,7 +148,7 @@ def getRevDns(ip):
             if "data" in answer:
                 validate_ip(answer["data"])
                 if type(answer["data"]) != str:
-                    logger.debug('getRevDns adding to answers: %s ' % answer["data"])
+                    logging.debug('getRevDns adding to answers: %s ' % answer["data"])
                     answer["data"] = answer["data"].decode("utf-8", "strict")
                 return answer["data"]
 
@@ -160,7 +163,7 @@ def getShodan(ip, shodanKey):
         return response
     except Exception as e:
         print('Shodan error: %s' % e)
-        logger.info('Shodan error: %s' % e)
+        logging.info('Shodan error: %s' % e)
         return False
 
 
@@ -170,18 +173,18 @@ def checkPrivate(ip):
     '''
     validate_ip(ip)
     try:
-        logger.debug('Check private IP: %s' % ip)
+        logging.debug('Check private IP: %s' % ip)
         # if convert_ip failes it returns ValueError
         ip = convert_ip(ip)
     except ValueError as e:
-        logger.debug('Check private IP failed: %s' % e)
+        logging.debug('Check private IP failed: %s' % e)
         return False
     # Now perform True/False check
     if (ipaddress.ip_address(ip).is_private):
-        logger.debug('Address in checkPrivate is private: %s' % ip)
+        logging.debug('Address in checkPrivate is private: %s' % ip)
         return True
     else:
-        logger.debug('Address in checkPrivate is NOT private: %s' % ip)
+        logging.debug('Address in checkPrivate is NOT private: %s' % ip)
         return False
 
 
@@ -191,12 +194,12 @@ def checkReserved(ip):
     '''
     ip = convert_ip(ip)
     validate_ip(ip)
-    logger.info('Check reserved IP: %s' % ip)
+    logging.info('Check reserved IP: %s' % ip)
     if (ipaddress.ip_address(ip).is_reserved):
-        logger.debug('Address in checkReserved is reserved: %s' % ip)
+        logging.debug('Address in checkReserved is reserved: %s' % ip)
         return True
     else:
-        logger.debug('Address in checkReserved is NOT reserved: %s' % ip)
+        logging.debug('Address in checkReserved is NOT reserved: %s' % ip)
         return False
 
 

@@ -35,33 +35,11 @@ except ImportError:
 if apiKeys.shodanKey:
   shodanKey = apiKeys.shodanKey
 
-'''
-Configure logger properties
-'''
-__LOG_PATH = '/var/log/secops'
-__LOG_FILE = '%s/assassin.log' % (__LOG_PATH,)
-__LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-'''
-Configure logger
-'''
-Path(__LOG_PATH).mkdir(parents=True, exist_ok=True)
-  # create logger
-logger = logging.getLogger('assassinLogger')
-logger.setLevel(logging.DEBUG)
-# create file handler which logs even debug messages
-fh = logging.FileHandler(__LOG_FILE)
-fh.setLevel(logging.DEBUG)
-# create console handler with a higher log level
-#ch = logging.StreamHandler()
-#ch.setLevel(logging.ERROR)
-# create formatter and add it to the handlers
-formatter = logging.Formatter(__LOG_FORMAT)
-fh.setFormatter(formatter)
-#ch.setFormatter(formatter)
-# add the handlers to the logger
-logger.addHandler(fh)
-#logger.addHandler(ch)
-logger.info('Logging configured')
+logging.basicConfig(
+    filename="/var/log/secops/assassin.log",
+    level=logging.DEBUG,
+    format="[%(asctime)s] [%(filename)s:%(lineno)s - %(funcName)5s() - %(processName)s] %(levelname)s - %(message)s"
+    )
 
 summary = {}
 
@@ -77,16 +55,16 @@ def main():
     hosts = getDnsht(domain)
     if not hosts:
       print("No DNS entries discovered for target domain %s" % domain)
-      logger.debug('No DNS entries discovered for target domain %s' % (domain))
+      logging.debug('No DNS entries discovered for target domain %s' % (domain))
       report.close()
       sys.exit()
     else:
       summary['hosts'] = len(hosts)
       for host in hosts:
         print("Processing host: %s" % (host))
-        logger.debug('Processing host: %s' % (host))
+        logging.debug('Processing host: %s' % (host))
         report.write('<div class="host">%s</div>\n' % (host, ))
-        logger.debug('Calling check_non_prod for host: %s' % (host, ))
+        logging.debug('Calling check_non_prod for host: %s' % (host, ))
         check_non_prod(report, host, summary)
         # hostname/domain/URL tags will go here in the future
         ips = getFwdDns(host)
@@ -97,20 +75,20 @@ def main():
           for ip in ips:
             ip = convert_ip(ip)
             report.write('<div class="ip">IP: %s</div>\n' % (ip, ))
-            logger.debug('Calling report_ip: %s' % (ip))
+            logging.debug('Calling report_ip: %s' % (ip))
             report_ip(report, domain, ip, summary)
-            logger.debug('Calling report_whois: %s' % (ip))
+            logging.debug('Calling report_whois: %s' % (ip))
             report_whois(report,ip)
-            logger.debug('Calling getShodan: %s' % (ip))
+            logging.debug('Calling getShodan: %s' % (ip))
             shodan = getShodan(ip, shodanKey)
             if shodan:
-              logger.debug('Calling report_shodan: %s %s' % (domain,ip))
+              logging.debug('Calling report_shodan: %s %s' % (domain,ip))
               report_shodan(report, domain, ip, shodan, summary)
     close_report(report)
     # Generate the Summary
     sumfile = "%s-summary.html" % (domain.split(".")[0], )
     sum = open(sumfile, "w")
-    logger.debug('Calling generate_summary')
+    logging.debug('Calling generate_summary')
     generate_summary(sum, summary)
 
 

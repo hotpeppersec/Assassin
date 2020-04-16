@@ -11,8 +11,11 @@ except ImportError:
 
 import logging
 
-# attach logger
-logger = logging.getLogger('assassinLogger')
+logging.basicConfig(
+    filename="/var/log/secops/assassin.log",
+    level=logging.DEBUG,
+    format="%(asctime)s:%(levelname)s:%(message)s"
+    )
 
 # move this to a better place
 detects = {}
@@ -21,14 +24,14 @@ try:
     detectdata = json.load(detectjson)
     detects = detectdata['service detections']
     print("Signatures loaded")
-    logger.debug('Signatures loaded')
+    logging.debug('Signatures loaded')
 except:
     print("Signature file is either missing or corrupt.")
-    logger.debug('Signature file is either missing or corrupt')
+    logging.debug('Signature file is either missing or corrupt')
 
 
 def report_header(report, domain):
-    logger.debug('Create report header for domain: %s' % domain)
+    logging.debug('Create report header for domain: %s' % domain)
     report.write('<html>\n')
     report.write('<head>\n')
     report.write('<title>Assassin Report for %s</title>\n' % (domain, ))
@@ -49,7 +52,7 @@ def domain_xfer(report, domaindata):
     '''
     DOMAIN TRANSFER
     '''
-    logger.debug('domain transfer status')
+    logging.debug('domain transfer status')
     clientDelete = True
     clientTransfer = True
     clientUpdate = True
@@ -97,7 +100,7 @@ def domain_expiration(report, domaindata):
     '''
     DOMAIN EXPIRATION
     '''
-    logger.debug('Domain expiration')
+    logging.debug('Domain expiration')
     if 'events' in domaindata:
         for event in domaindata['events']:
             if 'eventAction' in event and 'eventDate' in event:
@@ -118,7 +121,7 @@ def check_non_prod(report, host, summary):
     '''
     NONPROD HOSTS
     '''
-    logger.debug('Check for non prod string in hostname: %s' % host.lower())
+    logging.debug('Check for non prod string in hostname: %s' % host.lower())
     if (
         "demo" in host.lower() or
         "qa" in host.lower() or
@@ -143,7 +146,7 @@ def report_ip(report, domain, ip, summary):
     '''
     '''    
     ip = convert_ip(ip)
-    logger.debug('Create report for IP: %s' % ip)
+    logging.debug('Create report for IP: %s' % ip)
     if checkPrivate(ip):
         if not 'privateips' in summary:
             summary['privateips'] = 0
@@ -161,7 +164,7 @@ def report_ip(report, domain, ip, summary):
         reverse = getRevDns(ip)
         if reverse:
             cleanreverse = str(reverse).lower().rstrip('.')
-            logger.debug('Adding reverse %s to report' % cleanreverse)
+            logging.debug('Adding reverse %s to report' % cleanreverse)
             report.write(
                 '<div class="ip">Reverse DNS: %s</div>\n' % (cleanreverse, ))
             if '.amazonaws.com' in cleanreverse:
@@ -208,7 +211,7 @@ def report_whois(report,ip):
     '''
     '''
     ip = convert_ip(ip)
-    logger.debug('Add whois to report for IP: %s' % ip)
+    logging.debug('Add whois to report for IP: %s' % ip)
     whois = getWhois(ip)
     if whois:
         report.write('<div class="ip">WhoIs: %s</div>\n' % (whois, ))
@@ -217,7 +220,7 @@ def report_whois(report,ip):
 def report_shodan(report, domain, ip, shodan, summary):
     '''
     '''
-    logger.debug('shodan')
+    logging.debug('shodan')
     
     if 'latitude' in shodan and 'longitude' in shodan:
         if not 'mapdata' in summary:
@@ -229,10 +232,10 @@ def report_shodan(report, domain, ip, shodan, summary):
     if 'data' in shodan:
         for service in shodan['data']:
             if not 'services' in summary:
-                logger.debug('Reset service summary counter')
+                logging.debug('Reset service summary counter')
                 summary['services'] = 0
             summary['services'] += 1
-            logger.debug('Increment service summary counter')
+            logging.debug('Increment service summary counter')
 
             report.write('<div class="service">\n')
             if 'transport' in service and 'port' in service and 'product' in service:
@@ -262,7 +265,7 @@ def report_shodan(report, domain, ip, shodan, summary):
 
             if 'data' in service:
                 report.write('<div class="data"><pre>\n')
-                logger.debug('Writing service data: %s' % service['data'])
+                logging.debug('Writing service data: %s' % service['data'])
                 report.write(service['data'].strip().replace("<", "&lt").replace(">", "&gt"))
                 report.write('\n</pre></div>\n')
 
@@ -574,10 +577,10 @@ def report_shodan(report, domain, ip, shodan, summary):
                             report.write(
                                 '<div class="ssldata">\n')
                             if not 'sslerrorversion' in summary:
-                                logger.debug('Reset sslerrorversion counter')
+                                logging.debug('Reset sslerrorversion counter')
                                 summary['sslerrorversion'] = 0
                             else:
-                                logger.debug('Increment sslerrorversion counter')
+                                logging.debug('Increment sslerrorversion counter')
                                 summary['sslerrorversion'] += 1
                         elif version.strip() in warnversions:
                             report.write('</div>\n')
@@ -713,7 +716,7 @@ def report_shodan(report, domain, ip, shodan, summary):
 def close_report(report):
     '''
     '''
-    logger.debug('Closing out the report file')
+    logging.debug('Closing out the report file')
     report.write('</body>\n')
     report.write('</html>\n')
     report.close()

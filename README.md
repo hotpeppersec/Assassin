@@ -1,4 +1,6 @@
 ![Assassin application](https://github.com/wwce/Assassin/workflows/Assassin%20application/badge.svg?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/assassin/badge/?version=latest)](https://assassin.readthedocs.io/en/latest/?badge=latest)
+
 
 ![Assassin](https://github.com/hotpeppersec/Assassin/blob/master/docs/images/Assassin.png)
 

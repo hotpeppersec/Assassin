@@ -2,12 +2,15 @@
 
 import logging
 
-# attach logger
-logger = logging.getLogger('assassinLogger')
+logging.basicConfig(
+    filename="/var/log/secops/assassin.log",
+    level=logging.DEBUG,
+    format="%(asctime)s:%(levelname)s:%(message)s"
+    )
 
 
 def generate_summary(sum, summary):
-    logger.debug('Generating summary file')
+    logging.debug('Generating summary file')
     sum.write("<html>")
     sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
     if 'nonprod' in summary:
