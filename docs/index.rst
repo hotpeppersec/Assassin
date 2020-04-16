@@ -34,10 +34,3 @@ Welcome to assassin's documentation!
    :caption: setup
 
    02-troubleshooting/troubleshooting
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

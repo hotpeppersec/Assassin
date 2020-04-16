@@ -388,7 +388,11 @@ def report_shodan(report, domain, ip, host, hosts, shodan, summary):
                             '<div class="data"><pre>\n')
                         for line in htmllines:
                             if len(line.strip().rstrip("\n")) > 0:
-                                report.write("%s\n" % (line.replace("<", "&lt").replace(">", "&gt"), ))
+                                try:
+                                  logging.debug("line from htmllines in report_shodan(): %s" % line)
+                                  report.write("%s\n" % (line.replace("<", "&lt").replace(">", "&gt"), ))
+                                except UnicodeEncodeError as e:
+                                    logging.debug("Unicode error from htmllines in report_shodan(): %s" % e)
                                 if ("&key=" in line.lower() or "apikey" in line.lower()) and ("googleapis.com" not in line.lower()):
                                     report.write(
                                         '</pre></dev>\n')
@@ -505,6 +509,7 @@ def report_shodan(report, domain, ip, host, hosts, shodan, summary):
                                 report.write(
                                     '<span class="sslwarning">Wildcard</span>')
                                 if not 'sslwildcard' in summary:
+                                    logging.debug('Reset sslwildcard counter')
                                     summary['sslwildcard'] = 0
                                 summary['sslwildcard'] += 1
 
@@ -518,6 +523,7 @@ def report_shodan(report, domain, ip, host, hosts, shodan, summary):
                                 report.write(
                                     '<span class="sslerror">Self-Signed</span>')
                                 if not 'selfsignedservices' in summary:
+                                    logging.debug('Reset selfsignedservices counter')
                                     summary['selfsignedservices'] = 0
                                 summary['selfsignedservices'] += 1
 
@@ -557,7 +563,8 @@ def report_shodan(report, domain, ip, host, hosts, shodan, summary):
                         if service['ssl']['cert']['expired']:
                             report.write(
                                 '<span class="sslerror">Expired</span>')
-                            if 'sslexpired' in summary:
+                            if not 'sslexpired' in summary:
+                                logging.debug('Reset sslexpired counter')
                                 summary['sslexpired'] = 0
                             summary['sslexpired'] += 1
 

@@ -30,6 +30,9 @@ and execute the test suite.
     make docker
     make test
 
+You should run the command `docker system prune` occasionally 
+to free up space on your filesystem.
+
 Automated Testing
 -----------------
 
@@ -39,6 +42,6 @@ install Python dependencies, run tests and lint with a
 single version of Python (currently 3.8).
 
 Test runs can be viewed (and reviewed for Pull Request errors)
-by clicking this link._
+by `clicking this link`._
 
-.. ._link: https://github.com/wwce/Assassin/actions?query=workflow%3A%22Assassin+application%22
+.. _clicking this link: https://github.com/wwce/Assassin/actions?query=workflow%3A%22Assassin+application%22
