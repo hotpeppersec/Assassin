@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-
-logging.basicConfig(
-    filename="/var/log/secops/assassin.log",
-    level=logging.DEBUG,
-    format="%(asctime)s:%(levelname)s:%(message)s"
-    )
+from pathlib import Path
 
 
 def generate_summary(sum, summary):

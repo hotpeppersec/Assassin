@@ -1,9 +1,12 @@
 name: Docker Image CI
 
-on: [push]
-
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  
 jobs:
-
   build:
 
     runs-on: ubuntu-latest
@@ -11,10 +14,26 @@ jobs:
       SHODAN_KEY: ${{ secrets.shodanKey }}
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
     - name: Build the docker-compose stack
-      run: make docker
-    - name: Test domain #1
-      run: cd /app/assassin && python assassin.py --domain big.net
-    - name: Test domain #2
-      run: cd /app/assassin && python assassin.py --domain bitsmasher.net
+      run: |
+        sudo apt -y install python3-setuptools
+        make docker
+    - name: Test domain one
+      run: |
+        sudo mkdir -p /var/log/secops
+        sudo chmod 777 /var/log/secops
+        cd assassin && python assassin.py --domain big.net && cat big-summary.html && cd -
+        cat /var/log/secops/assassin.log
+        rm /var/log/secops/assassin.log
+    - name: Test domain two
+      run: |
+        cd assassin && python assassin.py --domain bitsmasher.net && cat bitsmasher-summary.html	&& cd -
+        cat /var/log/secops/assassin.log
+        rm /var/log/secops/assassin.log
+    - name: Test domain three
+      run: cd assassin && python assassin.py --domain acxiom.com && cat acxiom-summary.html	&& cd -

@@ -34,4 +34,3 @@ jobs:
         sudo mkdir -p /var/log/secops
         sudo chmod 777 /var/log/secops
         make test
-

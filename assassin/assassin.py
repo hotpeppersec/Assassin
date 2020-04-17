@@ -13,12 +13,7 @@ if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
         getattr(ssl, '_create_unverified_context', None)):
     ssl._create_default_https_context = ssl._create_unverified_context
 
-'''
-apiKeys.py is a custom file you need to create & update
-Put it in the same directory as assassin.py
-'''
 try:
-  import apiKeys as apiKeys
   from lib.helper_functions import *
   from lib.reporting import *
   from lib.summary import *
@@ -26,20 +21,12 @@ try:
 except ImportError:
   DEBUG = False
 try:
-  import assassin.apiKeys as apiKeys
   from assassin.lib.helper_functions import *
   from assassin.lib.reporting import *
   from assassin.lib.summary import *
   from assassin.lib.key_mgmt import *
 except ImportError:
   DEBUG = True
-
-if apiKeys.shodanKey:
-  ''' Set the shodanKey from static file '''
-  shodanKey = apiKeys.shodanKey
-if apiKeys.shodanKey == 'CHANGEME':
-  ''' Set the shodanKey from env var if needed '''
-  shodanKey = load_shodan_key()
 
 summary = {}
 
@@ -91,13 +78,16 @@ def main():
             report_ip(report, domain, ip, summary)
             logging.debug('Calling report_whois: %s' % (ip))
             report_whois(report,ip)
-            if shodanKey:
+            shodanKey = shodan_key()
+            if shodanKey != False:
               logging.debug('Calling getShodan: %s' % (ip))
               ''' Call Shodan service to get results for an IP address '''
               shodan = getShodan(ip, shodanKey)
               if shodan:
                 logging.debug('Calling report_shodan: %s %s' % (domain,ip))
                 report_shodan(report, domain, ip, host, hosts, shodan, summary)
+            else:
+              logging.debug('No usable shodanKey, skipping Shodan analysis')
     close_report(report)
     # Generate the Summary
     sumfile = "%s-summary.html" % (domain.split(".")[0], )
