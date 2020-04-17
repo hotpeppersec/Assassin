@@ -39,7 +39,7 @@ def report_header(report, domain):
     report.write('</style>\n')
     report.write('</head>\n')
     report.write('<body>\n')
-    report.write('<img src="Assassin.png" width="500px"><br>\n')
+    report.write('<img src="../docs/images/Assassin.png" width="500px"><br>\n')
     report.write('<div class="title">%s</div>\n' % (domain, ))
 
 

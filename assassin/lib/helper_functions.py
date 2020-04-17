@@ -179,8 +179,8 @@ def getShodan(ip, shodanKey):
         response = json.loads(jsonresponse.read())
         return response
     except Exception as e:
-        print('Shodan error: %s' % e)
-        logging.info('Shodan error: %s' % e)
+        print('Shodan responded with error: %s' % e)
+        logging.info('Shodan responded with error: %s' % e)
         return False
 
 
