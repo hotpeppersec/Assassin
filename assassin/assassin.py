@@ -4,8 +4,9 @@
 Find the latest version here: https://github.com/wwce/Assassin
 """
 import json
-
-import sys
+import logging
+from pathlib import Path
+import sys, argparse
 import os
 import ssl
 if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
@@ -21,6 +22,7 @@ try:
   from lib.helper_functions import *
   from lib.reporting import *
   from lib.summary import *
+  from lib.key_mgmt import *
 except ImportError:
   DEBUG = False
 try:
@@ -28,27 +30,33 @@ try:
   from assassin.lib.helper_functions import *
   from assassin.lib.reporting import *
   from assassin.lib.summary import *
+  from assassin.lib.key_mgmt import *
 except ImportError:
   DEBUG = True
-if apiKeys.shodanKey:
-  shodanKey = apiKeys.shodanKey
 
-'''
-Configure logger
-'''
-import logging
-from pathlib import Path
-Path("/var/log/secops").mkdir(parents=True, exist_ok=True)
-logging.basicConfig(
-    filename="/var/log/secops/assassin.log",
-    level=logging.DEBUG,
-    format="[%(asctime)s] [%(filename)s:%(lineno)s - %(funcName)5s() - %(processName)s] %(levelname)s - %(message)s"
-)
+if apiKeys.shodanKey:
+  ''' Set the shodanKey from static file '''
+  shodanKey = apiKeys.shodanKey
+if apiKeys.shodanKey == 'CHANGEME':
+  ''' Set the shodanKey from env var if needed '''
+  shodanKey = load_shodan_key()
 
 summary = {}
 
+
 def main():
-    domain = input("What domain would you like to search (.com/.net)? ")
+    ''' Figure out which domain to test '''
+    domain=''
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--domain", help="Specify a target domain")
+    args = parser.parse_args()
+    if args.domain:
+        domain = args.domain
+    else:
+        domain = input("What domain would you like to search (.com/.net)? ")
+    print("Target domain specified: %s" % domain)
+    logging.debug("Target domain specified: %s" % domain)
+
     reportfile = "%s-detail.html" % (domain.split(".")[0], )
     report = open(reportfile, "w")
     report_header(report, domain)
@@ -83,11 +91,13 @@ def main():
             report_ip(report, domain, ip, summary)
             logging.debug('Calling report_whois: %s' % (ip))
             report_whois(report,ip)
-            logging.debug('Calling getShodan: %s' % (ip))
-            shodan = getShodan(ip, shodanKey)
-            if shodan:
-              logging.debug('Calling report_shodan: %s %s' % (domain,ip))
-              report_shodan(report, domain, ip, host, hosts, shodan, summary)
+            if shodanKey:
+              logging.debug('Calling getShodan: %s' % (ip))
+              ''' Call Shodan service to get results for an IP address '''
+              shodan = getShodan(ip, shodanKey)
+              if shodan:
+                logging.debug('Calling report_shodan: %s %s' % (domain,ip))
+                report_shodan(report, domain, ip, host, hosts, shodan, summary)
     close_report(report)
     # Generate the Summary
     sumfile = "%s-summary.html" % (domain.split(".")[0], )

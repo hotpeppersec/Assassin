@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import logging
+from pathlib import Path
+
 try:
   from lib.helper_functions import *
 except ImportError:
@@ -8,14 +11,6 @@ try:
   from assassin.lib.helper_functions import *
 except ImportError:
   DEBUG = True
-
-import logging
-
-logging.basicConfig(
-    filename="/var/log/secops/assassin.log",
-    level=logging.DEBUG,
-    format="%(asctime)s:%(levelname)s:%(message)s"
-    )
 
 # move this to a better place
 detects = {}

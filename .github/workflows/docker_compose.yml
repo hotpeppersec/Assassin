@@ -1,0 +1,20 @@
+name: Docker Image CI
+
+on: [push]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    env:
+      SHODAN_KEY: ${{ secrets.shodanKey }}
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the docker-compose stack
+      run: make docker
+    - name: Test domain #1
+      run: cd /app/assassin && python assassin.py --domain big.net
+    - name: Test domain #2
+      run: cd /app/assassin && python assassin.py --domain bitsmasher.net

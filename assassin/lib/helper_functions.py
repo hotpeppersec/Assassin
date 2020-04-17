@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import sys
+import os, sys
 import json
 from ipaddress import ip_address
 import ipaddress
+
+import logging
+from pathlib import Path
 
 try:
     # For Python 3.0 and later
@@ -12,17 +15,19 @@ except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen
 
-'''
-Configure logger
-'''
-import logging
-from pathlib import Path
-Path("/var/log/secops").mkdir(parents=True, exist_ok=True)
-logging.basicConfig(
-    filename="/var/log/secops/assassin.log",
-    level=logging.DEBUG,
-    format="[%(asctime)s] [%(filename)s:%(lineno)s - %(funcName)5s() - %(processName)s] %(levelname)s - %(message)s"
-)
+
+def check_docker():
+    '''
+    Decide if we are running in a Docker Container
+    '''
+    if not "/.dockerenv":
+        print('NOT RUNNING IN DOCKER CONTAINER')
+        logging.debug('NOT RUNNING IN DOCKER CONTAINER')
+        print('There may be issues with functionality.')
+        return False
+    else:
+        return True
+        logging.debug('We are running in docker container')
 
 
 def convert_ip(ip):
@@ -74,6 +79,9 @@ def getDomainInfo(domain):
 
 
 def getDnsht(domain):
+    '''
+    Call Hacker Target to get domain info
+    '''
     print("Hacker Target")
     logging.info('Hacker Target')
     url = "https://api.hackertarget.com/hostsearch/?q=%s" % (domain)
@@ -160,8 +168,10 @@ def getRevDns(ip):
                 return answer["data"]
 
 
-
 def getShodan(ip, shodanKey):
+    '''
+    Call Shodan service to get results for an IP address
+    '''
     validate_ip(ip)
     url = 'https://api.shodan.io/shodan/host/%s?key=%s' % (ip, shodanKey)
     try:
