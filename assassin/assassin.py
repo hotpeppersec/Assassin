@@ -60,6 +60,10 @@ def main():
     else:
       summary['hosts'] = len(hosts)
       for host in hosts:
+        if 'API count exceeded - Increase Quota with Membership' in host:
+          print ('Hacker Target said too many recent API calls, quitting')
+          logging.debug('Hacker Target said no, too many recent API calls')
+          sys.exit(1)
         print("Processing host: %s" % (host))
         logging.debug('Processing host: %s' % (host))
         report.write('<div class="host">%s</div>\n' % (host, ))
@@ -90,10 +94,11 @@ def main():
               logging.debug('No usable shodanKey, skipping Shodan analysis')
     close_report(report)
     # Generate the Summary
+    GoogleMapsKey = google_maps_key()
     sumfile = "%s-summary.html" % (domain.split(".")[0], )
     sum = open(sumfile, "w")
     logging.debug('Calling generate_summary')
-    generate_summary(sum, summary)
+    generate_summary(sum, summary, GoogleMapsKey)
 
 
 if __name__ == "__main__":

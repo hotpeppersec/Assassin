@@ -27,6 +27,27 @@ def shodan_key():
     return False
 
 
+def google_maps_key():
+    '''
+    Function to load keys from environment var rather that static file
+    '''
+    if 'GOOGLE_MAPS_KEY' in os.environ:
+        GoogleMapsKey = os.environ['GOOGLE_MAPS_KEY']
+        logging.debug('Found GOOGLE_MAPS_KEY in env vars')
+        return GoogleMapsKey
+    elif apiKeys.GoogleMapsKey != 'CHANGEME':
+        '''
+        apiKeys.py is a custom file you need to create & update
+        Put it in the same directory as assassin.py
+        Set the GoogleMapsKey from static file when value is not CHANGEME
+        '''
+        GoogleMapsKey = apiKeys.GoogleMapsKey
+        logging.debug('Set GoogleMapsKey from apiKeys.py')
+        return GoogleMapsKey
+    logging.debug('Did NOT find GOOGLE_MAPS_KEY in env vars or in apiKeys.py file')
+    return False
+
+
 __author__ = ''
 __copyright__ = ''
 __credits__ = ['']

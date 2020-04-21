@@ -4,10 +4,60 @@ import logging
 from pathlib import Path
 
 
-def generate_summary(sum, summary):
+def add_map_style(sum):
+    '''
+    Write the map style element to the HTML header
+    '''
+    logging.debug('Write the map style element to the HTML header')
+    sum.write('<style>\n')
+    sum.write('  #map {\n')
+    sum.write('    height: 400px;\n')
+    sum.write('    width: 800px;\n')
+    sum.write('    align: center;\n')
+    sum.write('   }\n')
+    sum.write('</style>\n')
+
+
+def add_map_to_summary(sum, summary, GoogleMapsKey):
+    '''
+    Write the map points and call the Google Maps API
+    '''
+    logging.debug('Write the map points and call the Google Maps API')
+    sum.write('Global Technology Distribution<br>\n')
+    sum.write('<div id="map"></div>')
+    sum.write('<script>')
+    sum.write('function initMap() {')
+    sum.write('  var center = {lat: 10, lng: 0};')
+    entrycounter = 1
+    if 'mapdata' in summary:
+        for entry in summary['mapdata']:
+            sum.write("  var point%s = {lat: %s, lng: %s};\n" % (str(entrycounter), entry['latitude'], entry['longitude']))
+            entrycounter += 1
+        sum.write("  var map = new google.maps.Map(document.getElementById('map'), {zoom: 1.75, center: center});\n")
+
+        entrycounter = 1
+        for entry in summary['mapdata']:
+            sum.write("  var marker%s = new google.maps.Marker({position: point%s, map: map});\n" % (entrycounter, entrycounter))
+            entrycounter += 1
+    else:
+        logging.debug('No mapdata key in summary dict')  
+    sum.write("}\n")
+    sum.write("</script>\n")
+    sum.write('<script async defer src="https://maps.googleapis.com/maps/api/js?key=%s&callback=initMap">\n' % (GoogleMapsKey, ))
+    sum.write("</script>\n")
+    sum.write("<br>\n")
+
+
+def generate_summary(sum, summary, GoogleMapsKey):
     logging.debug('Generating summary file')
-    sum.write("<html>")
-    sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
+    sum.write("<html>\n<head>\n")
+    if 'mapdata' in summary and GoogleMapsKey:
+        add_map_style(sum)
+    sum.write("</head>\n")
+    if 'mapdata' in summary and GoogleMapsKey:
+        add_map_to_summary(sum, summary, GoogleMapsKey)
+    if 'hosts' in summary:
+        sum.write("Hosts: %s<br>\n" % (summary['hosts'], ))
     if 'nonprod' in summary:
         sum.write("Non-Production Hosts: %s<br>\n" %
                   (str(summary['nonprod']), ))
@@ -104,7 +154,6 @@ def generate_summary(sum, summary):
     if 'sslnotdomain' in summary:
         sum.write("Potential pivot targets identified by SSL certificate: %s<br>\n" % (
             summary['sslnotdomain'], ))
-
     sum.write("<br>Vulnerabilities<br>\n")
     if 'vulntotal' in summary:
         sum.write("Total: %s<br>\n" % (summary['vulntotal'], ))
@@ -116,7 +165,6 @@ def generate_summary(sum, summary):
         sum.write("High: %s<br>\n" % (summary['vulnhigh'], ))
     if 'vulncritical' in summary:
         sum.write("Critical: %s<br>\n" % (summary['vulncritical'], ))
-
     if 'reversednspivottargets' in summary:
         sum.write("<br>Reverse DNS Pivot Targets<br>\n")
         for target in summary['reversednspivottargets']:
@@ -131,6 +179,7 @@ def generate_summary(sum, summary):
             sum.write("%s<br>\n" % (target, ))
     sum.write("</body></html>")
     sum.close()
+
 
 __author__ = 'Franklin Diaz'
 __copyright__ = ''
