@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os, sys
-import json
 from ipaddress import ip_address
 import ipaddress
+import json
 
 import logging
 from pathlib import Path
@@ -107,7 +107,7 @@ def getDnsht(domain):
             output.append(host)
         print("Received %s hosts from Hacker Target" % (len(lines), ))
         logging.debug('Received %s hosts from Hacker Target' %  (len(lines), ))
-        print("Combined to a total of %s hosts" % len(output))
+        #print("Combined to a total of %s hosts" % len(output))
         logging.debug('Combined to a total of %s hosts' % len(output))
         if len(output) > 0:
             return(output)

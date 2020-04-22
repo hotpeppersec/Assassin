@@ -15,51 +15,58 @@ if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
 
 try:
   from lib.helper_functions import *
-  from lib.reporting import *
-  from lib.summary import *
   from lib.key_mgmt import *
+  from lib.reporting import *
+  from lib.shodan import *
+  from lib.summary import *
 except ImportError:
   DEBUG = False
 try:
   from assassin.lib.helper_functions import *
-  from assassin.lib.reporting import *
-  from assassin.lib.summary import *
   from assassin.lib.key_mgmt import *
+  from assassin.lib.reporting import *
+  from assassin.lib.shodan import *
+  from assassin.lib.summary import *
 except ImportError:
   DEBUG = True
 
-summary = {}
 
+class my_domain:
+
+    def __init__(self, name):
+        self.name = name
+        self.report = {}
+        self.reportfile = "%s-detail.html" % (self.name.split(".")[0], )
+        self.summary = {}
+        self.sumfile = "%s-summary.html" % (self.name.split(".")[0], )
+        self.hosts = getDnsht(self.name)
 
 def main():
-    ''' Figure out which domain to test '''
-    domain=''
     parser = argparse.ArgumentParser()
     parser.add_argument("--domain", help="Specify a target domain")
     args = parser.parse_args()
     if args.domain:
-        domain = args.domain
+        dom_name = args.domain
     else:
-        domain = input("What domain would you like to search? ")
-    print("Target domain specified: %s" % domain)
-    logging.debug("Target domain specified: %s" % domain)
+        dom_name = input("What domain would you like to search ? ")
+    dom = my_domain(dom_name)
+    print("Target domain specified: %s" % dom.name)
+    logging.debug("Target domain specified: %s" % dom.name)
+    report = open(dom.reportfile, "w")
+    report_header(report, dom.name)
+    domaindata = getDomainInfo(dom.name)
 
-    reportfile = "%s-detail.html" % (domain.split(".")[0], )
-    report = open(reportfile, "w")
-    report_header(report, domain)
-    domaindata = getDomainInfo(domain)
     if domaindata:
       domain_xfer(report, domaindata)
       domain_expiration(report, domaindata)
-    hosts = getDnsht(domain)
-    if not hosts:
-      print("No DNS entries discovered for target domain %s" % domain)
-      logging.debug('No DNS entries discovered for target domain %s' % (domain))
+    if not dom.hosts:
+      print("No DNS entries discovered for target domain %s" % dom.name)
+      logging.debug('No DNS entries discovered for target domain %s' % (dom.name))
       report.close()
       sys.exit()
     else:
-      summary['hosts'] = len(hosts)
-      for host in hosts:
+      dom.summary['hosts'] = len(dom.hosts)
+      for host in dom.hosts:
         if 'API count exceeded - Increase Quota with Membership' in host:
           print ('Hacker Target said too many recent API calls, quitting')
           logging.debug('Hacker Target said no, too many recent API calls')
@@ -68,18 +75,18 @@ def main():
         logging.debug('Processing host: %s' % (host))
         report.write('<div class="host">%s</div>\n' % (host, ))
         logging.debug('Calling check_non_prod for host: %s' % (host, ))
-        check_non_prod(report, host, summary)
+        check_non_prod(report, host, dom.summary)
         # hostname/domain/URL tags will go here in the future
         ips = getFwdDns(host)
         if ips:
-          if not 'ips' in summary:
-            summary['ips'] = 0
-          summary['ips'] += 1
+          if not 'ips' in dom.summary:
+            dom.summary['ips'] = 0
+          dom.summary['ips'] += 1
           for ip in ips:
             ip = convert_ip(ip)
             report.write('<div class="ip">IP: %s</div>\n' % (ip, ))
             logging.debug('Calling report_ip: %s' % (ip))
-            report_ip(report, domain, ip, summary)
+            report_ip(report, dom.name, ip, dom.summary)
             logging.debug('Calling report_whois: %s' % (ip))
             report_whois(report,ip)
             shodanKey = shodan_key()
@@ -88,17 +95,16 @@ def main():
               ''' Call Shodan service to get results for an IP address '''
               shodan = getShodan(ip, shodanKey)
               if shodan:
-                logging.debug('Calling report_shodan: %s %s' % (domain,ip))
-                report_shodan(report, domain, ip, host, hosts, shodan, summary)
+                logging.debug('Calling report_shodan: %s %s' % (dom.name,ip))
+                report_shodan(report, dom, ip, host, shodan)
             else:
               logging.debug('No usable shodanKey, skipping Shodan analysis')
     close_report(report)
     # Generate the Summary
     GoogleMapsKey = google_maps_key()
-    sumfile = "%s-summary.html" % (domain.split(".")[0], )
-    sum = open(sumfile, "w")
+    sum = open(dom.sumfile, "w")
     logging.debug('Calling generate_summary')
-    generate_summary(sum, summary, GoogleMapsKey)
+    generate_summary(sum, dom.summary, GoogleMapsKey)
 
 
 if __name__ == "__main__":

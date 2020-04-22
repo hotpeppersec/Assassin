@@ -40,7 +40,7 @@ def add_map_to_summary(sum, summary, GoogleMapsKey):
             sum.write("  var marker%s = new google.maps.Marker({position: point%s, map: map});\n" % (entrycounter, entrycounter))
             entrycounter += 1
     else:
-        logging.debug('No mapdata key in summary dict')  
+        logging.debug('No mapdata key in summary dict')
     sum.write("}\n")
     sum.write("</script>\n")
     sum.write('<script async defer src="https://maps.googleapis.com/maps/api/js?key=%s&callback=initMap">\n' % (GoogleMapsKey, ))
