@@ -59,14 +59,13 @@ def getDomainInfo(domain):
 
     print('Lookup %s.%s via Verisign' % (ext[0], ext[1]))
     logging.info('Lookup %s.%s via Verisign' % (ext[0], ext[1]))
-
+    # RDAP lookups have been simplfied: https://about.rdap.org/
     if ext[1] == "com":
         url = "https://rdap.verisign.com/com/v1/domain/%s" % (domain)
     elif ext[1] == "net":
         url = "https://rdap.verisign.com/net/v1/domain/%s" % (domain)
     else:
-        print('See https://www.verisign.com/en_US/domain-names/registration-data-access-protocol/index.xhtml for documentation.')
-        sys.exit()
+        url = "https://rdap.org/domain/%s" % (domain)    
     logging.debug('Checking %s with URL: %s' % (ext[1], url))
     try:
         jsonresponse = urlopen(url)

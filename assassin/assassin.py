@@ -40,7 +40,7 @@ def main():
     if args.domain:
         domain = args.domain
     else:
-        domain = input("What domain would you like to search (.com/.net)? ")
+        domain = input("What domain would you like to search? ")
     print("Target domain specified: %s" % domain)
     logging.debug("Target domain specified: %s" % domain)
 
