@@ -40,6 +40,7 @@ def domain_xfer(report, domaindata):
     clientTransfer = True
     clientUpdate = True
     if 'status' in domaindata:
+        logging.debug('domain transfer status: FOUND STATUS')
         statuses = domaindata['status']
         if len(statuses) > 0:
             if "client delete prohibited" in statuses:

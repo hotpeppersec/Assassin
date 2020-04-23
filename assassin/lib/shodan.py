@@ -123,7 +123,7 @@ def report_shodan(report, dom, ip, host, shodan):
                         httpstatus = service['data'].split('\n')[0].split(' ')[1]
                         if len(httpstatus) == 3:
                             if httpstatus[0] == "3":
-                                if 'httpredirect' in summary:
+                                if 'httpredirect' in dom.summary:
                                     dom.summary['httpredirect'] += 1
                                 else:
                                     dom.summary['httpredirect'] = 1
@@ -147,13 +147,13 @@ def report_shodan(report, dom, ip, host, shodan):
                                                     'https://').lstrip('http://').rstrip().rstrip('/').split('/')[0].replace('www.', '')
                                                 report.write(
                                                     '<span class="dataerror">Pivot Target: %s</span>' % pivottarget)
-                                                if not 'redirectdifferentdomain' in summary:
+                                                if not 'redirectdifferentdomain' in dom.summary:
                                                     dom.summary['redirectdifferentdomain'] = 0
-                                                summary['redirectdifferentdomain'] += 1
+                                                dom.summary['redirectdifferentdomain'] += 1
                                                 if not 'redirectpivottargets' in dom.summary:
                                                     dom.summary['redirectpivottargets'] = [
                                                     ]
-                                                if pivottarget not in summary['redirectpivottargets']:
+                                                if pivottarget not in dom.summary['redirectpivottargets']:
                                                     dom.summary['redirectpivottargets'].append(
                                                         pivottarget)
                                             else:
@@ -187,7 +187,7 @@ def report_shodan(report, dom, ip, host, shodan):
                 for recommendation in tag['recommendations']:
                     report.write(
                         'Recommendation: %s<br>\n' % (recommendation, ))
-                if not tag['type'] in summary:
+                if not tag['type'] in dom.summary:
                     dom.summary[tag['type']] = 0
                 dom.summary[tag['type']] += 1
                 report.write('</div>\n')
@@ -203,7 +203,7 @@ def report_shodan(report, dom, ip, host, shodan):
                         for line in htmllines:
                             if len(line.strip().rstrip("\n")) > 0:
                                 try:
-                                  logging.debug("line from htmllines in report_shodan(): %s" % line)
+                                  #logging.debug("line from htmllines in report_shodan(): %s" % line)
                                   report.write("%s\n" % (line.replace("<", "&lt").replace(">", "&gt"), ))
                                 except UnicodeEncodeError as e:
                                     logging.debug("Unicode error from htmllines in report_shodan(): %s" % e)
@@ -233,7 +233,7 @@ def report_shodan(report, dom, ip, host, shodan):
                                         if not 'linkpivottargets' in dom.summary:
                                             dom.summary['linkpivottargets'] = [
                                             ]
-                                        if linkhost not in summary['linkpivottargets']:
+                                        if linkhost not in dom.summary['linkpivottargets']:
                                             dom.summary['linkpivottargets'].append(
                                                 linkhost)
                                             print(
@@ -250,7 +250,7 @@ def report_shodan(report, dom, ip, host, shodan):
                                         '<span class="datainfo">HTML Form</span>')
                                     report.write(
                                         '<div class="data"><pre>\n')
-                                    if not 'htmlforms' in summary:
+                                    if not 'htmlforms' in dom.summary:
                                         dom.summary['htmlforms'] = 0
                                     dom.summary['htmlforms'] += 1
 
@@ -398,12 +398,12 @@ def report_shodan(report, dom, ip, host, shodan):
                                 '<span class="sslerror">%s</span>\n' % (version, ))
                             report.write(
                                 '<div class="ssldata">\n')
-                            if not 'sslerrorversion' in summary:
+                            if not 'sslerrorversion' in dom.summary:
                                 logging.debug('Reset sslerrorversion counter')
-                                summary['sslerrorversion'] = 0
+                                dom.summary['sslerrorversion'] = 0
                             else:
                                 logging.debug('Increment sslerrorversion counter')
-                                summary['sslerrorversion'] += 1
+                                dom.summary['sslerrorversion'] += 1
                         elif version.strip() in warnversions:
                             report.write('</div>\n')
                             report.write(
@@ -474,7 +474,7 @@ def report_shodan(report, dom, ip, host, shodan):
                         if cipher not in goodciphers:
                             report.write(
                                 '<span class="sslwarning">Less Secure Cipher</span>')
-                            if not 'sslbadcipher' in summary:
+                            if not 'sslbadcipher' in dom.summary:
                                 dom.summary['sslbadcipher'] = 0
                             dom.summary['sslbadcipher'] += 1
 

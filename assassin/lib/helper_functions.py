@@ -7,13 +7,12 @@ import json
 
 import logging
 from pathlib import Path
+from urllib.request import urlopen
+import ssl
+if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
+        getattr(ssl, '_create_unverified_context', None)):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
-try:
-    # For Python 3.0 and later
-    from urllib.request import urlopen
-except ImportError:
-    # Fall back to Python 2's urllib2
-    from urllib2 import urlopen
 
 
 def check_docker():
@@ -65,16 +64,17 @@ def getDomainInfo(domain):
     elif ext[1] == "net":
         url = "https://rdap.verisign.com/net/v1/domain/%s" % (domain)
     else:
-        url = "https://rdap.org/domain/%s" % (domain)    
+        url = 'https://rdap.publicinterestregistry.net/rdap/org/domain/%s' % (domain)   
     logging.debug('Checking %s with URL: %s' % (ext[1], url))
     try:
         jsonresponse = urlopen(url)
         response = json.loads(jsonresponse.read())
-        logging.debug(response)
+        logging.debug('Response from Verisign %s' % response)
         return response
     except Exception as e:
         print(e)
         return ("Exception: %s" % e)
+        logging.debug("Exception: %s" % e)
 
 
 def getDnsht(domain):

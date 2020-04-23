@@ -23,6 +23,13 @@ def test_getDomaininfo_net(capsys):
   assert 'objectClassName' in json_data
 
 
+def test_getDomaininfo_net(capsys):
+  response = getDomainInfo('slashdot.org')
+  temp = json.dumps(response)
+  json_data = json.loads(temp)
+  assert 'objectClassName' in json_data
+
+
 __author__     = 'Franklin Diaz'
 __copyright__  = ''
 __credits__    = ['{credit_list}']
