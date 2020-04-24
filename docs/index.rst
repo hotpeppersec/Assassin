@@ -23,14 +23,22 @@ Welcome to assassin's documentation!
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: setup
+   :caption: operation
 
-   01-setup/quickstart
-   01-setup/development
+   01-operation/mac_quickstart
+   01-operation/development
+   01-operation/operation
 
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: setup
+   :caption: results
 
-   02-troubleshooting/troubleshooting
+   02-results/results
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: troubleshooting
+
+   03-troubleshooting/troubleshooting

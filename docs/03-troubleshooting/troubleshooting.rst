@@ -13,11 +13,15 @@ Shodan Errors
 
 - Shodan error: HTTP Error 404: Not Found
 
-  - If you see `Processing host:` followed by a 404 error from Shodan, this means there is a DNS entry but the host is not up or does not exist.
+  - If you see `Processing host:` followed by a 404 error from 
+  Shodan, this means there is a DNS entry but the host is not up 
+  or does not exist. It could also mean the ports on the target
+  host are being protected by a firewall.
 
 - Shodan error: HTTP Error 503: Service Unavailable
 
-  - Try disabling Global Protect
+You might try disabling Global Protect to get your local
+machine to properlay access Shodan.
 
 
 Reporting Issues/Requesting Help

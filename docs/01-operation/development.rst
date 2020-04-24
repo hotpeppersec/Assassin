@@ -6,7 +6,7 @@ Testing
 -------
 
 Test cases are located in the /test folder. Test-specific
-Python modules to be installed in the docker container
+Python3 modules to be installed in the docker container
 are listed in `/requirements-test.txt`. The Dockerfile
 specifies a recent version of Python 3.x.
 
@@ -14,7 +14,8 @@ Disable Global Protect
 ----------------------
 
 If the operator runs the tool with Global Protect enabled, 
-the Shodan portion of the tool is blocked. 
+the Shodan portion of the tool is blocked as described in the
+troubleshooting section. 
 
 - The console will show HTTP 503 errors.
 - The report output will be incomplete.
