@@ -16,7 +16,7 @@ Overview
    attacker a list of potential target devices.
 
 Description
-   Asassin was originally developed by Dan Ward of the Palo Alto
+   Asassin was originally developed by the Palo Alto
    Networks SecOps CE Team. It uses some scripting to assemble 
    the output of a few well known techniques (Hacker Target, Shodan)
    to gather information about the publicly registered devices of a

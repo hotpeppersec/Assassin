@@ -26,8 +26,9 @@ Welcome to assassin's documentation!
    :caption: operation
 
    01-operation/mac_quickstart
-   01-operation/development
+   01-operation/keys
    01-operation/operation
+   01-operation/development
 
 .. toctree::
    :maxdepth: 2
